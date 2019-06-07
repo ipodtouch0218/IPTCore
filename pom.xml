@@ -15,7 +15,7 @@
     <dependency>
        <groupId>org.spigotmc</groupId>
        <artifactId>spigot-api</artifactId>
-       <version>1.14.1-R0.1-SNAPSHOT</version>
+       <version>1.13.2-R0.1-SNAPSHOT</version>
        <scope>provided</scope>
     </dependency>
   </dependencies>
@@ -23,21 +23,12 @@
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
-      <!--  
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-        </configuration>
-      </plugin>
-      -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.7.0</version>
         <configuration>
-          <release>9</release>
+          <source>1.8</source>
+          <target>1.8</target>
         </configuration>
       </plugin>
     </plugins>

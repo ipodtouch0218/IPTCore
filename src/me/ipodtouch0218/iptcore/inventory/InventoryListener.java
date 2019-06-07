@@ -1,5 +1,6 @@
 package me.ipodtouch0218.iptcore.inventory;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Stack;
@@ -28,9 +29,12 @@ public class InventoryListener implements Listener {
 		if (history == null) { return; }
 		if (history.size() <= 0) { return; }
 		GuiInventory currentInv = history.peek();
-				
 		Inventory topInv = e.getView().getTopInventory();
-		if (currentInv.getInventory() != topInv) { return; }
+		
+		boolean equals = Arrays.equals(currentInv.getInventory().getContents(), 
+				topInv.getContents());
+		
+		if (!equals) { return; }
 		
 		e.setCancelled(true);
 		GuiElement element = currentInv.getElement(e.getSlot());
@@ -46,7 +50,10 @@ public class InventoryListener implements Listener {
 		if (!histories.containsKey(playerUUID)) { return; }
 		Stack<GuiInventory> history = histories.get(playerUUID);
 		
-		if (history.peek().getInventory() != e.getInventory()) {
+		boolean equals = Arrays.equals(history.peek().getInventory().getContents(), 
+				e.getInventory().getContents());
+		
+		if (!equals) {
 			//different inventory opened than expected one, remove history
 			histories.remove(playerUUID);
 		}
