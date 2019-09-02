@@ -6,7 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.inventory.ItemStack;
@@ -93,5 +95,31 @@ public class ItemUtils {
 		ItemMeta meta = item.getItemMeta();
 		meta.addEnchant(GLOW_ENCHANTMENT, 0, true);
 		item.setItemMeta(meta);
+	}
+	
+	public static ItemStack parseItem_v1_8(ConfigurationSection section) {
+		Material mat = null;
+		try {
+			mat = Material.valueOf(section.getString("type", "BEDROCK").toUpperCase());
+		} catch (Exception e) {
+			System.err.println("Unable to parse item at '" + section.getCurrentPath() + "' - Unknown Material '" + section.getString("type", null) + "'");
+			return null;
+		}
+		@SuppressWarnings("deprecation")
+		ItemBuilder builder = new ItemBuilder(new ItemStack(mat, section.getInt("amount", 1), (short) section.getInt("data", 0)));
+		
+		if (section.isSet("name")) {
+			if (section.getString("name").equals("")) {
+				builder.setDisplayName("§r");
+			} else {
+				builder.setDisplayName(section.getString("name"));
+			}
+		}
+		if (section.isSet("lore")) {
+			builder.setLore(section.getStringList("lore"));
+		}
+		builder.setGlowing(section.getBoolean("enchanted", false));
+		
+		return builder.build();
 	}
 }

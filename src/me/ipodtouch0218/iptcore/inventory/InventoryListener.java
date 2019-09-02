@@ -11,11 +11,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 
 import me.ipodtouch0218.iptcore.IPTCore;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
+import me.ipodtouch0218.iptcore.inventory.runnables.GuiCloseRunnable;
 
 public class InventoryListener implements Listener {
 
@@ -37,10 +39,27 @@ public class InventoryListener implements Listener {
 		if (!equals) { return; }
 		
 		e.setCancelled(true);
-		GuiElement element = currentInv.getElement(e.getSlot());
+		GuiElement element = currentInv.getElement(e.getRawSlot());
 		
 		if (element != null) {
-			element.onClick((Player) e.getWhoClicked(), currentInv);
+			element.onClick((Player) e.getWhoClicked(), currentInv, e.getClick());
+		}
+	}
+	
+	@EventHandler
+	public void onInventoryClose(InventoryCloseEvent e) {
+		UUID playerUUID = e.getPlayer().getUniqueId();
+		if (!histories.containsKey(playerUUID)) { return; }
+		Stack<GuiInventory> history = histories.get(playerUUID);
+		
+		boolean equals = Arrays.equals(history.peek().getInventory().getContents(), 
+				e.getInventory().getContents());
+		
+		if (equals) {
+			history.peek().getRunnables().stream()
+				.filter(GuiCloseRunnable.class::isInstance)
+				.map(GuiCloseRunnable.class::cast)
+				.forEach(run -> run.run(e));
 		}
 	}
 	
@@ -87,7 +106,7 @@ public class InventoryListener implements Listener {
 		for (Entry<UUID,Stack<GuiInventory>> e : histories.entrySet()) {
 			Player pl = Bukkit.getPlayer(e.getKey());
 			if (pl == null) { continue; }
-			if (pl.getOpenInventory().getTopInventory() == e.getValue().peek().getInventory()) {
+			if (pl.getOpenInventory().getTopInventory().equals(e.getValue().peek().getInventory())) {
 				pl.closeInventory();
 			}
 		}

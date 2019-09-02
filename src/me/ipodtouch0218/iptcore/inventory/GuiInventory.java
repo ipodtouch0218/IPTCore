@@ -1,17 +1,21 @@
 package me.ipodtouch0218.iptcore.inventory;
 
+import java.util.HashSet;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
+import me.ipodtouch0218.iptcore.inventory.runnables.GuiRunnable;
 
 public class GuiInventory {
 
 	private Inventory inv;
 	private int size;
 	private GuiElement[] elements;
+	private HashSet<GuiRunnable> runnables = new HashSet<>();
 	
 	public GuiInventory(int size, String title, GuiElement... elements) {
 		if (size % 9 != 0 || size <= 0) {
@@ -48,8 +52,13 @@ public class GuiInventory {
 		elements[slot] = element;
 		updateInventory();
 	}	
+
+	public void setRunnables(HashSet<GuiRunnable> runnables) {
+		this.runnables = runnables;
+	}
 	
 	//---GETTERS---//
+	public HashSet<GuiRunnable> getRunnables() { return runnables; }
 	public Inventory getInventory() { return inv; }
 	public int getSize() { return size; }
 	public GuiElement[] getElements() { return elements; }

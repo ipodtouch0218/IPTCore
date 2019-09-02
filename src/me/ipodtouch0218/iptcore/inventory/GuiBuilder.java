@@ -1,23 +1,26 @@
 package me.ipodtouch0218.iptcore.inventory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.bukkit.inventory.ItemStack;
 
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
+import me.ipodtouch0218.iptcore.inventory.runnables.GuiRunnable;
 
 public class GuiBuilder {
 
 	private HashMap<Integer, GuiElement> elements = new HashMap<>();
-	private int size = 9;
+	private int size = 1;
 	private String title;
+	private HashSet<GuiRunnable> runnables = new HashSet<>();
 	
 	public GuiBuilder(int size) {
 		this.size = size;
 	}
 	
 	//---SETTINGS---//
-	public GuiBuilder setSize(int size) { 
+	public GuiBuilder setRows(int size) { 
 		this.size = size;
 		return this;
 	}
@@ -78,14 +81,19 @@ public class GuiBuilder {
 		return this;
 	}
 	
+	//---EVENTS---//
+	public GuiBuilder addGuiRunnable(GuiRunnable e) {
+		runnables.add(e);
+		return this;
+	}
+	
+	
 	//---BUILD---//
 	public GuiInventory build() {
-		if (size % 9 != 0 || size < 9) {
-			throw new IllegalArgumentException("Size must be a multiple of 9 and at least 9!");
-		}
-		GuiElement[] elementArray = new GuiElement[size];
-		elements.entrySet().stream().filter(e -> (e.getKey() < size && e.getKey() >= 0)).forEach(e -> elementArray[e.getKey()] = e.getValue());
-		GuiInventory inv = new GuiInventory(size, title, elementArray);
+		GuiElement[] elementArray = new GuiElement[size*9];
+		elements.entrySet().stream().filter(e -> (e.getKey() < size*9 && e.getKey() >= 0)).forEach(e -> elementArray[e.getKey()] = e.getValue());
+		GuiInventory inv = new GuiInventory(size*9, title, elementArray);
+		inv.setRunnables(runnables);
 		
 		return inv;
 	}

@@ -2,6 +2,7 @@ package me.ipodtouch0218.iptcore.inventory.elements;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 
 import me.ipodtouch0218.iptcore.inventory.GuiInventory;
@@ -19,7 +20,7 @@ public class GuiToggleButton extends GuiElement {
 	}
 
 	@Override
-	public void onClick(Player player, GuiInventory inventory) {
+	public void onClick(Player player, GuiInventory inventory, ClickType type) {
 		currentValue = !currentValue;
 		inventory.updateInventory();
 		onValueChange();

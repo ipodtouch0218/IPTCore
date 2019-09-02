@@ -1,6 +1,7 @@
 package me.ipodtouch0218.iptcore.inventory.elements;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 
 import me.ipodtouch0218.iptcore.inventory.GuiInventory;
@@ -13,7 +14,7 @@ public class GuiElement {
 		this.stack = stack;
 	}
 	
-	public void onClick(Player player, GuiInventory inventory) {}
+	public void onClick(Player player, GuiInventory inventory, ClickType click) {}
 	
 	//---SETTERS---//
 	public void setItem(ItemStack stack) {
