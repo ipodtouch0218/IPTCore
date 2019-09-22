@@ -31,7 +31,7 @@ public class GuiBuilder {
 	}
 	
 	public GuiBuilder setItem(ItemStack stack, int slot) { 
-		return setItem(new GuiElement(stack), slot);
+		return setItem(new GuiElement(stack, false), slot);
 	}
 	public GuiBuilder setItem(ItemStack stack, int x, int y) {
 		return setItem(stack, x+(y*9));
@@ -48,7 +48,7 @@ public class GuiBuilder {
 	
 	//---BORDER---//
 	public GuiBuilder fillBorder(ItemStack stack, int x1, int y1, int x2, int y2) {
-		return fillBorder(new GuiElement(stack), x1, y1, x2, y2);
+		return fillBorder(new GuiElement(stack, false), x1, y1, x2, y2);
 	}
 	public GuiBuilder fillBorder(GuiElement element, int x1, int y1, int x2, int y2) {
 		for (int x = x1; x <= x2; x++) {
@@ -68,7 +68,7 @@ public class GuiBuilder {
 	
 	//---FILL AREA---//
 	public GuiBuilder fillArea(ItemStack stack, int x1, int y1, int x2, int y2) {
-		return fillArea(new GuiElement(stack), x1, y1, x2, y2);
+		return fillArea(new GuiElement(stack, false), x1, y1, x2, y2);
 	}
 	public GuiBuilder fillArea(GuiElement element, int x1, int y1, int x2, int y2) {
 		for (int x = x1; x <= x2; x++) {

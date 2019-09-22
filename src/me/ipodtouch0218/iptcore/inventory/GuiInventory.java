@@ -1,9 +1,13 @@
 package me.ipodtouch0218.iptcore.inventory;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.OptionalInt;
+import java.util.stream.IntStream;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -52,7 +56,16 @@ public class GuiInventory {
 		elements[slot] = element;
 		updateInventory();
 	}	
-
+	public void addElement(GuiElement guiElement) {
+		OptionalInt indexOpt = IntStream.range(0, elements.length)
+			     .filter(i -> (elements[i] == null || elements[i].getItem().getType() == Material.AIR))
+			     .findFirst();
+		
+		if (!indexOpt.isPresent()) { return; }
+		elements[indexOpt.getAsInt()] = guiElement;
+		updateInventory();
+	}
+	
 	public void setRunnables(HashSet<GuiRunnable> runnables) {
 		this.runnables = runnables;
 	}
@@ -65,5 +78,9 @@ public class GuiInventory {
 	public GuiElement getElement(int slot) { 
 		if (slot < 0 || slot >= size) { return null; }
 		return elements[slot];
+	}
+	
+	public GuiInventory clone() {
+		return new GuiInventory(size, inv.getName(), Arrays.copyOf(elements, elements.length));
 	}
 }

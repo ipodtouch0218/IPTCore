@@ -43,6 +43,9 @@ public class InventoryListener implements Listener {
 		
 		if (element != null) {
 			element.onClick((Player) e.getWhoClicked(), currentInv, e.getClick());
+			if (element.closeOnClick()) {
+				e.getWhoClicked().closeInventory();
+			}
 		}
 	}
 	

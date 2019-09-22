@@ -1,17 +1,25 @@
 package me.ipodtouch0218.iptcore.inventory.elements;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 
 import me.ipodtouch0218.iptcore.inventory.GuiInventory;
+import me.ipodtouch0218.iptcore.utils.ConfigParserUtils;
 
 public class GuiElement {
 
 	protected ItemStack stack;
+	private boolean closeOnClick;
 	
-	public GuiElement(ItemStack stack) {
+	public GuiElement(ItemStack stack, boolean closeOnClick) {
 		this.stack = stack;
+		this.closeOnClick = closeOnClick;
+	}
+	public GuiElement(ConfigurationSection section) {
+		stack = ConfigParserUtils.parseItem_v1_8(section);
+		closeOnClick = section.getBoolean("close", false);
 	}
 	
 	public void onClick(Player player, GuiInventory inventory, ClickType click) {}
@@ -25,5 +33,7 @@ public class GuiElement {
 	public ItemStack getItem() { 
 		return stack; 
 	}
-	
+	public boolean closeOnClick() { 
+		return closeOnClick;
+	}
 }

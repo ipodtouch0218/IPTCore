@@ -12,6 +12,8 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import de.tr7zw.changeme.nbtapi.NBTItem;
+
 public class ItemBuilder {
 
 	
@@ -74,21 +76,8 @@ public class ItemBuilder {
 	 * @param level The enchantment's level.
 	 * @return Current ItemBuilder instance.
 	 */
-	public ItemBuilder addValidEnchantment(Enchantment ench, int level) {
-		try {
-			currentStack.addEnchantment(ench, level);
-		} catch (Exception e) {}
-		
-		return this;
-	}
-	/**
-	 * Adds an invalid or unsafe enchantment to the item.
-	 * @param ench The enchantment to add.
-	 * @param level The enchantment's level.
-	 * @return Current ItemBuilder instance.
-	 */
-	public ItemBuilder addUnsafeEnchantment(Enchantment ench, int level) {
-		currentStack.addUnsafeEnchantment(ench, level);
+	public ItemBuilder addEnchantment(Enchantment ench, int level) {
+		meta.addEnchant(ench, level, true);
 		return this;
 	}
 	
@@ -163,6 +152,17 @@ public class ItemBuilder {
 		}
 		finalLore.addAll(additionalLore);
 		meta.setLore(finalLore);
+		return this;
+	}
+	
+	public ItemBuilder setUnbreakable(boolean value) {
+		currentStack.setItemMeta(meta);
+		
+		NBTItem nbt = new NBTItem(currentStack);
+		nbt.setBoolean("Unbreakable", value);
+		currentStack = nbt.getItem();
+		
+		meta = currentStack.getItemMeta();
 		return this;
 	}
 	

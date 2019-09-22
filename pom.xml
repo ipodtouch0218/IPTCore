@@ -2,22 +2,32 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>IPTCore</groupId>
   <artifactId>IPTCore</artifactId>
-  <version>1.0.3</version>
+  <version>1.1.1</version>
   
   <repositories>
     <repository>
       <id>spigot-repo</id>
       <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
     </repository>
+	<repository>
+	  <id>codemc-repo</id>
+	  <url>https://repo.codemc.org/repository/maven-public/</url>
+	  <layout>default</layout>
+	</repository>
   </repositories>
   
   <dependencies>
     <dependency>
        <groupId>org.spigotmc</groupId>
        <artifactId>spigot-api</artifactId>
-       <version>1.14.3-R0.1-SNAPSHOT</version>
+       <version>1.8.8-R0.1-SNAPSHOT</version>
        <scope>provided</scope>
     </dependency>
+	<dependency>
+	  <groupId>de.tr7zw</groupId>
+	  <artifactId>item-nbt-api</artifactId>
+	  <version>2.0.0</version>
+	</dependency>
   </dependencies>
   
   <build>
@@ -29,6 +39,28 @@
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <id>shade</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <relocations>
+            <relocation>
+              <pattern>de.tr7zw.changeme.nbtapi</pattern>
+              <shadedPattern>me.ipodtouch0218.iptcore.utils.nbtapi</shadedPattern>
+            </relocation>
+          </relocations>
         </configuration>
       </plugin>
     </plugins>

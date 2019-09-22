@@ -2,9 +2,12 @@ package me.ipodtouch0218.iptcore.utils;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class FormatUtils {
 
@@ -41,5 +44,16 @@ public class FormatUtils {
 	
 	public static String stringReplaceColor(String input, Map<String,?> replMap) {
 		return ChatColor.translateAlternateColorCodes('&', stringReplace(input, replMap));
+	}
+	
+	public static void stringReplaceNameLore(ItemStack input, Map<String,?> replMap) {
+		ItemMeta meta = input.getItemMeta();
+		if (meta.hasDisplayName()) {
+			meta.setDisplayName(stringReplace(meta.getDisplayName(), replMap));
+		}
+		if (meta.hasLore()) {
+			meta.setLore(meta.getLore().stream().map(str -> stringReplace(str, replMap)).collect(Collectors.toList()));
+		}
+		input.setItemMeta(meta);
 	}
 }

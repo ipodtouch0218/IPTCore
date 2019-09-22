@@ -1,16 +1,12 @@
 package me.ipodtouch0218.iptcore.utils;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -38,11 +34,21 @@ public class ItemUtils {
 			meta.setLore(Arrays.asList(lore));
 		}
 		if (glow) {
-			glowItem(stack);
+//			glowItem(stack);
 		}
 		
 		stack.setItemMeta(meta);
 		return stack;
+	}
+	
+	public static void setLore(ItemStack item, String... lines) {
+		ItemMeta meta = item.getItemMeta();
+		meta.setLore(
+			Arrays.stream(lines)
+				.map(str -> ChatColor.translateAlternateColorCodes('&', str))
+				.collect(Collectors.toList())
+		);
+		item.setItemMeta(meta);
 	}
 	
 	public static void addLore(ItemStack item, String... lines) {
@@ -65,61 +71,35 @@ public class ItemUtils {
 		item.setItemMeta(meta);
 	}
 
-	public static void glowItem(ItemStack item) {
-		if (GLOW_ENCHANTMENT == null) {
-			@SuppressWarnings("deprecation")
-			NamespacedKey key = new NamespacedKey("test.key", "glow");
-			if (Enchantment.getByKey(key) != null) {
-				GLOW_ENCHANTMENT = Enchantment.getByKey(key);
-			} else {
-				GLOW_ENCHANTMENT = new Enchantment(key) {
-					public String getName() { return null; }
-					public int getMaxLevel() { return 0; }
-					public int getStartLevel() { return 0; }
-					public EnchantmentTarget getItemTarget() { return EnchantmentTarget.ALL; }
-					public boolean isTreasure() { return false; }
-					public boolean isCursed() { return false; }
-					public boolean conflictsWith(Enchantment other) { return false; }
-					public boolean canEnchantItem(ItemStack item) { return true; }
-				};
-		        try {
-		            Field f = Enchantment.class.getDeclaredField("acceptingNew");
-		            f.setAccessible(true);
-		            f.set(null, true);
-		            Enchantment.registerEnchantment(GLOW_ENCHANTMENT);
-		        } catch (Exception e) {
-		            e.printStackTrace();
-		        }
-			}
-		}
-		ItemMeta meta = item.getItemMeta();
-		meta.addEnchant(GLOW_ENCHANTMENT, 0, true);
-		item.setItemMeta(meta);
-	}
-	
-	public static ItemStack parseItem_v1_8(ConfigurationSection section) {
-		Material mat = null;
-		try {
-			mat = Material.valueOf(section.getString("type", "BEDROCK").toUpperCase());
-		} catch (Exception e) {
-			System.err.println("Unable to parse item at '" + section.getCurrentPath() + "' - Unknown Material '" + section.getString("type", null) + "'");
-			return null;
-		}
-		@SuppressWarnings("deprecation")
-		ItemBuilder builder = new ItemBuilder(new ItemStack(mat, section.getInt("amount", 1), (short) section.getInt("data", 0)));
-		
-		if (section.isSet("name")) {
-			if (section.getString("name").equals("")) {
-				builder.setDisplayName("§r");
-			} else {
-				builder.setDisplayName(section.getString("name"));
-			}
-		}
-		if (section.isSet("lore")) {
-			builder.setLore(section.getStringList("lore"));
-		}
-		builder.setGlowing(section.getBoolean("enchanted", false));
-		
-		return builder.build();
-	}
+//	public static void glowItem(ItemStack item) {
+//		if (GLOW_ENCHANTMENT == null) {
+//			@SuppressWarnings("deprecation")
+//			NamespacedKey key = new NamespacedKey("test.key", "glow");
+//			if (Enchantment.getByKey(key) != null) {
+//				GLOW_ENCHANTMENT = Enchantment.getByKey(key);
+//			} else {
+//				GLOW_ENCHANTMENT = new Enchantment(key) {
+//					public String getName() { return null; }
+//					public int getMaxLevel() { return 0; }
+//					public int getStartLevel() { return 0; }
+//					public EnchantmentTarget getItemTarget() { return EnchantmentTarget.ALL; }
+//					public boolean isTreasure() { return false; }
+//					public boolean isCursed() { return false; }
+//					public boolean conflictsWith(Enchantment other) { return false; }
+//					public boolean canEnchantItem(ItemStack item) { return true; }
+//				};
+//		        try {
+//		            Field f = Enchantment.class.getDeclaredField("acceptingNew");
+//		            f.setAccessible(true);
+//		            f.set(null, true);
+//		            Enchantment.registerEnchantment(GLOW_ENCHANTMENT);
+//		        } catch (Exception e) {
+//		            e.printStackTrace();
+//		        }
+//			}
+//		}
+//		ItemMeta meta = item.getItemMeta();
+//		meta.addEnchant(GLOW_ENCHANTMENT, 0, true);
+//		item.setItemMeta(meta);
+//	}
 }
