@@ -12,10 +12,9 @@ public class GuiToggleButton extends GuiElement {
 	protected ItemStack offStack;
 	protected boolean currentValue;
 	
-	public GuiToggleButton(String settingName, boolean defaultValue) {
-//		super(ItemUtils.nameItem(new ItemStack(Material.LIME_DYE), settingName + " &7- &aEnabled", false), false);
-//		this.offStack = ItemUtils.nameItem(new ItemStack(Material.GRAY_DYE), settingName + " &7- &cDisabled", false);
-		super(null);
+	public GuiToggleButton(ItemStack onStack, ItemStack offStack, boolean defaultValue) {
+		super(onStack, false);
+		this.offStack = offStack;
 		this.currentValue = defaultValue;
 	}
 	public GuiToggleButton(ConfigurationSection section) {

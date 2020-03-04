@@ -81,6 +81,17 @@ public class GuiBuilder {
 		return this;
 	}
 	
+	//---FILL ALL---//
+	public GuiBuilder fill(ItemStack stack) {
+		return fill(new GuiElement(stack, false));
+	}
+	public GuiBuilder fill(GuiElement element) {
+		for (int i = 0; i < size*9; i++) {
+			elements.put(i, element);
+		}
+		return this;
+	}
+	
 	//---EVENTS---//
 	public GuiBuilder addGuiRunnable(GuiRunnable e) {
 		runnables.add(e);

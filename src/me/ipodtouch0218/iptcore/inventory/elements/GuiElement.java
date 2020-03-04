@@ -33,6 +33,9 @@ public class GuiElement {
 	public ItemStack getItem() { 
 		return stack; 
 	}
+	public ItemStack getItem(GuiInventory inventory) {
+		return getItem();
+	}
 	public boolean closeOnClick() { 
 		return closeOnClick;
 	}

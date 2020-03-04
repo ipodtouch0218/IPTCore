@@ -1,14 +1,21 @@
 package me.ipodtouch0218.iptcore.utils;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
+
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 
 public class ItemUtils {
 	
@@ -33,9 +40,7 @@ public class ItemUtils {
 			}
 			meta.setLore(Arrays.asList(lore));
 		}
-		if (glow) {
-//			glowItem(stack);
-		}
+		//TODO: fix glow enchantment
 		
 		stack.setItemMeta(meta);
 		return stack;
@@ -71,6 +76,19 @@ public class ItemUtils {
 		item.setItemMeta(meta);
 	}
 
+    public static void applyCustomHeadTexture(SkullMeta meta, String texture) {
+        GameProfile profile = new GameProfile(UUID.randomUUID(), "");
+        profile.getProperties().put("textures", new Property("textures", texture));
+        Field profileField = null;
+        try {
+            profileField = meta.getClass().getDeclaredField("profile");
+            profileField.setAccessible(true);
+            profileField.set(meta, profile);
+        } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+            e.printStackTrace();
+        }
+    }
+	
 //	public static void glowItem(ItemStack item) {
 //		if (GLOW_ENCHANTMENT == null) {
 //			@SuppressWarnings("deprecation")

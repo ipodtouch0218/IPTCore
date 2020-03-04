@@ -11,6 +11,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import de.tr7zw.changeme.nbtapi.NBTItem;
 
@@ -163,6 +164,13 @@ public class ItemBuilder {
 		currentStack = nbt.getItem();
 		
 		meta = currentStack.getItemMeta();
+		return this;
+	}
+	
+	public ItemBuilder setTexture(String texture) {
+		if (meta instanceof SkullMeta) {
+			ItemUtils.applyCustomHeadTexture((SkullMeta) meta, texture);
+		}
 		return this;
 	}
 	

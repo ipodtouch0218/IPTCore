@@ -33,10 +33,14 @@ public class ConfigParserUtils {
 	}};
 	
 	public static GuiInventory parseInventory(ConfigurationSection section) {
-		return parseInventory(section, null);
+		return parseInventory(section, null, null);
 	}
 	
 	public static GuiInventory parseInventory(ConfigurationSection section, Map<String,Class<? extends GuiElement>> classes) {
+		return parseInventory(section, classes, null);
+	}
+	
+	public static GuiInventory parseInventory(ConfigurationSection section, Map<String,Class<? extends GuiElement>> classes, Map<Object,Object> titleReplMap) {
 		if (section == null) { return null; }
 		if (classes == null) {
 			classes = DEFAULT_ELEMENTS;
@@ -47,6 +51,10 @@ public class ConfigParserUtils {
 		try {
 			int rows = section.getInt("rows", 3);
 			String title = ChatColor.translateAlternateColorCodes('&', section.getString("title", "n/a"));
+		
+			if (titleReplMap != null) {
+				title = FormatUtils.stringReplaceColor(title, titleReplMap);
+			}
 			
 			GuiBuilder builder = new GuiBuilder(rows);
 			builder.setTitle(title);
@@ -92,6 +100,7 @@ public class ConfigParserUtils {
 				} catch (Exception e2) { 
 					
 					// Unable to parse...
+					e2.printStackTrace();
 					
 				}
 				
@@ -105,12 +114,17 @@ public class ConfigParserUtils {
 	}
 	
 	public static ItemStack parseItem_v1_8(ConfigurationSection section) {
-		Material mat = GenericUtils.getEnumFromString(Material.class, section.getString("type", "BEDROCK").toUpperCase());
+		if (section == null) { return null; }
+		Material mat = GenericUtils.getEnumFromString(Material.class, section.getString("type", "").toUpperCase());
 		if (mat == null) {
-			System.err.println("Unable to parse item at '" + section.getCurrentPath() + "' - Unknown Material '" + section.getString("type", null) + "'");
+			System.err.println("Unable to parse item at '" + section.getCurrentPath() + "' - Unknown Material Type '" + section.getString("type", null) + "'");
 			return null;
 		}
 		ItemBuilder builder = new ItemBuilder(new ItemStack(mat, section.getInt("amount", 1), (short) section.getInt("data", 0)));
+		
+		if (mat == Material.SKULL_ITEM && section.isSet("texture")) {
+			builder.setTexture(section.getString("texture"));
+		}
 		
 		if (section.isSet("name")) {
 			if (section.getString("name").equals("")) {

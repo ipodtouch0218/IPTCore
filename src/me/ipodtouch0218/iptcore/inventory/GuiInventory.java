@@ -1,6 +1,7 @@
 package me.ipodtouch0218.iptcore.inventory;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
@@ -20,6 +21,7 @@ public class GuiInventory {
 	private int size;
 	private GuiElement[] elements;
 	private HashSet<GuiRunnable> runnables = new HashSet<>();
+	private HashMap<Object, Object> data = new HashMap<>();
 	
 	public GuiInventory(int size, String title, GuiElement... elements) {
 		if (size % 9 != 0 || size <= 0) {
@@ -42,7 +44,7 @@ public class GuiInventory {
 		for (int i = 0; i < elements.length; i++) {
 			ItemStack item = null;
 			if (elements[i] != null) {
-				item = elements[i].getItem();
+				item = elements[i].getItem(this);
 			}
 			inv.setItem(i, item);
 		}
@@ -72,6 +74,7 @@ public class GuiInventory {
 	
 	//---GETTERS---//
 	public HashSet<GuiRunnable> getRunnables() { return runnables; }
+	public HashMap<Object, Object> getData() { return data; }
 	public Inventory getInventory() { return inv; }
 	public int getSize() { return size; }
 	public GuiElement[] getElements() { return elements; }
