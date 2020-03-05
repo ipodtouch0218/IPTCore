@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -25,6 +26,7 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	private static boolean INITIALIZED = false;
 	private static BungeeCommunicationHandler INSTANCE;
 	private static HashMap<String, ArrayList<CompletableFuture<Object>>> QUEUED_FUTURES = new HashMap<>();
+	private static HashMap<String, Consumer<BungeeMessageWrapper>> CUSTOM_LISTENERS = new HashMap<>();
 	
 	public void initialize() {
 		INSTANCE = this;
@@ -38,8 +40,6 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	public void onPluginMessageReceived(String channel, Player player, byte[] message) {
 		if (!channel.equals("BungeeCord"))
 			return;
-		
-		Bukkit.getOnlinePlayers().forEach(pl -> pl.sendMessage("RESPONSE: " + new String(message)));
 		
 		ByteArrayDataInput in = ByteStreams.newDataInput(message);
 		String subchannel = in.readUTF();
@@ -86,7 +86,13 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 			}
 			
 			futures.remove(0);
+		} else {
+			if (CUSTOM_LISTENERS.containsKey(subchannel)) {
+				CUSTOM_LISTENERS.get(subchannel).accept(new BungeeMessageWrapper(subchannel, player.getUniqueId(), in));
+			}
 		}
+		
+		
 	}
 	
 	//---BUNGEE FUNCTIONS---//
@@ -228,5 +234,9 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		if (player == null)
 			player = getRandomPlayer();
 		player.sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
+	}
+	
+	public static void setCustomListener(String subchannel, Consumer<BungeeMessageWrapper> listener) {
+		CUSTOM_LISTENERS.put(subchannel, listener);
 	}
 }
