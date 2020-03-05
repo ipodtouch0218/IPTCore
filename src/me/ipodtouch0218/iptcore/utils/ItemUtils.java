@@ -1,6 +1,7 @@
 package me.ipodtouch0218.iptcore.utils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,18 +9,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
-
 public class ItemUtils {
-	
-	private static Enchantment GLOW_ENCHANTMENT;
 	
 	private ItemUtils() {}
 	
@@ -77,47 +71,19 @@ public class ItemUtils {
 	}
 
     public static void applyCustomHeadTexture(SkullMeta meta, String texture) {
-        GameProfile profile = new GameProfile(UUID.randomUUID(), "");
-        profile.getProperties().put("textures", new Property("textures", texture));
-        Field profileField = null;
+
         try {
-            profileField = meta.getClass().getDeclaredField("profile");
+        	Class<?> gameProfileClass = Class.forName("com.mojang.authlib.GameProfile");
+        	Class<?> propertyClass = Class.forName("com.mojang.authlib.properties.Property");
+        	
+            Object profile = gameProfileClass.getConstructor(UUID.class, String.class).newInstance(UUID.randomUUID(), "");
+            Object textureProperty = propertyClass.getConstructor(String.class, String.class).newInstance("textures", texture);
+            profile.getClass().getMethod("put", String.class, propertyClass).invoke(profile, "textures", textureProperty);
+            Field profileField = meta.getClass().getDeclaredField("profile");
             profileField.setAccessible(true);
             profileField.set(meta, profile);
-        } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+        } catch (ClassNotFoundException | IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
             e.printStackTrace();
         }
     }
-	
-//	public static void glowItem(ItemStack item) {
-//		if (GLOW_ENCHANTMENT == null) {
-//			@SuppressWarnings("deprecation")
-//			NamespacedKey key = new NamespacedKey("test.key", "glow");
-//			if (Enchantment.getByKey(key) != null) {
-//				GLOW_ENCHANTMENT = Enchantment.getByKey(key);
-//			} else {
-//				GLOW_ENCHANTMENT = new Enchantment(key) {
-//					public String getName() { return null; }
-//					public int getMaxLevel() { return 0; }
-//					public int getStartLevel() { return 0; }
-//					public EnchantmentTarget getItemTarget() { return EnchantmentTarget.ALL; }
-//					public boolean isTreasure() { return false; }
-//					public boolean isCursed() { return false; }
-//					public boolean conflictsWith(Enchantment other) { return false; }
-//					public boolean canEnchantItem(ItemStack item) { return true; }
-//				};
-//		        try {
-//		            Field f = Enchantment.class.getDeclaredField("acceptingNew");
-//		            f.setAccessible(true);
-//		            f.set(null, true);
-//		            Enchantment.registerEnchantment(GLOW_ENCHANTMENT);
-//		        } catch (Exception e) {
-//		            e.printStackTrace();
-//		        }
-//			}
-//		}
-//		ItemMeta meta = item.getItemMeta();
-//		meta.addEnchant(GLOW_ENCHANTMENT, 0, true);
-//		item.setItemMeta(meta);
-//	}
 }
