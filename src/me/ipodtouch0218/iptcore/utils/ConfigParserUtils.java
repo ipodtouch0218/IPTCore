@@ -128,7 +128,7 @@ public class ConfigParserUtils {
 		
 		if (section.isSet("name")) {
 			if (section.getString("name").equals("")) {
-				builder.setDisplayName("§r");
+				builder.setDisplayName("\u00A7r");
 			} else {
 				builder.setDisplayName(section.getString("name"));
 			}
@@ -141,7 +141,7 @@ public class ConfigParserUtils {
 		for (Map<?,?> enchs : section.getMapList("enchantments")) {
 			try {
 				Enchantment name = Enchantment.getByName((String) enchs.get("type"));
-				int level = (int) enchs.get("level");
+				int level = (int) (enchs.get("level"));
 				builder.addEnchantment(name, level);
 			} catch (Exception e) {}
 		}
