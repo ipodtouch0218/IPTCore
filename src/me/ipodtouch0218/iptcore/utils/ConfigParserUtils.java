@@ -139,9 +139,11 @@ public class ConfigParserUtils {
 		builder.setUnbreakable(section.getBoolean("unbreakable", false));
 
 		for (Map<?,?> enchs : section.getMapList("enchantments")) {
+			@SuppressWarnings("unchecked")
+			Map<Object,Object> casted = (Map<Object,Object>) enchs;
 			try {
 				Enchantment name = Enchantment.getByName((String) enchs.get("type"));
-				int level = (int) (enchs.get("level"));
+				int level = (Integer) (casted.get("level"));
 				builder.addEnchantment(name, level);
 			} catch (Exception e) {}
 		}
