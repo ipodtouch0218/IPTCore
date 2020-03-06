@@ -19,6 +19,7 @@ public class GuiInventory {
 
 	private Inventory inv;
 	private int size;
+	private String title;
 	private GuiElement[] elements;
 	private HashSet<GuiRunnable> runnables = new HashSet<>();
 	private HashMap<Object, Object> data = new HashMap<>();
@@ -35,6 +36,7 @@ public class GuiInventory {
 		} else {
 			inv = Bukkit.createInventory(null, size);
 		}
+		this.title = title;
 		updateInventory();
 	}
 	
@@ -84,6 +86,6 @@ public class GuiInventory {
 	}
 	
 	public GuiInventory clone() {
-		return new GuiInventory(size, inv.getName(), Arrays.copyOf(elements, elements.length));
+		return new GuiInventory(size, title, Arrays.copyOf(elements, elements.length));
 	}
 }

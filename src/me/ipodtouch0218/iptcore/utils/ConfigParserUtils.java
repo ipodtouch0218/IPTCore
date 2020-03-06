@@ -113,6 +113,7 @@ public class ConfigParserUtils {
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static ItemStack parseItem_v1_8(ConfigurationSection section) {
 		if (section == null) { return null; }
 		Material mat = GenericUtils.getEnumFromString(Material.class, section.getString("type", "").toUpperCase());
@@ -122,7 +123,7 @@ public class ConfigParserUtils {
 		}
 		ItemBuilder builder = new ItemBuilder(new ItemStack(mat, section.getInt("amount", 1), (short) section.getInt("data", 0)));
 		
-		if (mat == Material.SKULL_ITEM && section.isSet("texture")) {
+		if (mat == Material.PLAYER_HEAD && section.isSet("texture")) {
 			builder.setTexture(section.getString("texture"));
 		}
 		
