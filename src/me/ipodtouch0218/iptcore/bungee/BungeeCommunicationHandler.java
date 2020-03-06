@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -57,11 +58,13 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 				break;
 			}
 			case "PlayerCount": {
+				in.readUTF(); //Waste server name read.
 				int count = in.readInt();
 				future.complete(count);
 				break;
 			}
 			case "PlayerList": {
+				in.readUTF(); //Waste server name read.
 				String[] players = in.readUTF().split(","); 
 				future.complete(players);
 				break;
