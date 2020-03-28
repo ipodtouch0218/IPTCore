@@ -1,10 +1,11 @@
 package me.ipodtouch0218.iptcore.bungee;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -26,7 +27,7 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 
 	private static boolean INITIALIZED = false;
 	private static BungeeCommunicationHandler INSTANCE;
-	private static HashMap<String, ArrayList<CompletableFuture<Object>>> QUEUED_FUTURES = new HashMap<>();
+	private static HashMap<String, ArrayList<BungeeFutureWrapper<Object>>> QUEUED_FUTURES = new HashMap<>();
 	private static HashMap<String, Consumer<BungeeMessageWrapper>> CUSTOM_LISTENERS = new HashMap<>();
 	
 	public void initialize() {
@@ -44,12 +45,22 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		
 		ByteArrayDataInput in = ByteStreams.newDataInput(message);
 		String subchannel = in.readUTF();
+		BungeeMessageWrapper bmw = new BungeeMessageWrapper(subchannel, player.getUniqueId(), in);
+		
 		if (QUEUED_FUTURES.containsKey(subchannel)) {
-			ArrayList<CompletableFuture<Object>> futures = QUEUED_FUTURES.get(subchannel);
+			ArrayList<BungeeFutureWrapper<Object>> futures = QUEUED_FUTURES.get(subchannel);
 			if (futures.size() <= 0)
 				return;
 			
-			CompletableFuture<Object> future = futures.get(0);
+			BungeeFutureWrapper<Object> wrapper = futures.get(0);
+			CompletableFuture<Object> future = wrapper.getFuture();
+			
+			if (wrapper.getConsumer() != null) {
+				future.complete(wrapper.getConsumer().accept(bmw));
+				futures.remove(0);
+				return;
+			}
+			
 			switch (subchannel) {
 			case "IP": {
 				String ip = in.readUTF();
@@ -83,16 +94,15 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 				in.readUTF(); //waste player name response.
 			case "UUID": {
 				String uuid = in.readUTF();
+				uuid = uuid.replaceFirst("([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]+)", "$1-$2-$3-$4-$5"); //add dashes...
 				future.complete(UUID.fromString(uuid));
 				break;
 			}
 			}
 			
 			futures.remove(0);
-		} else {
-			if (CUSTOM_LISTENERS.containsKey(subchannel)) {
-				CUSTOM_LISTENERS.get(subchannel).accept(new BungeeMessageWrapper(subchannel, player.getUniqueId(), in));
-			}
+		} else if (CUSTOM_LISTENERS.containsKey(subchannel)) {
+			CUSTOM_LISTENERS.get(subchannel).accept(bmw);
 		}
 		
 		
@@ -123,6 +133,7 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	public static void forwardMessageToServer(String subchannel, String server, Object... message) {
 		ByteArrayDataOutput out = getOutputData("Forward");
 		out.writeUTF(server);
+		out.writeUTF(subchannel);
 		
 		ByteArrayOutputStream msgbytes = new ByteArrayOutputStream();
 		DataOutputStream msgout = new DataOutputStream(msgbytes);
@@ -157,6 +168,42 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	}
 	public static void forwardMessageToAllServers(String subchannel, Object... message) {
 		forwardMessageToServer(subchannel, "ALL", message);
+	}
+	
+	public static <T> CompletableFuture<T> customMessage(String subchannel, BungeeMessageConsumer<T> consumer, Object... message) {
+		customMessage(subchannel, message);
+		return createResponseFuture(subchannel, consumer);
+	}
+	
+	public static void customMessage(String subchannel, Object... message) {
+		ByteArrayDataOutput out = getOutputData(subchannel);
+		
+		ByteArrayOutputStream msgbytes = new ByteArrayOutputStream();
+		DataOutputStream msgout = new DataOutputStream(msgbytes);
+		try {
+			for (Object obj : message) {
+				if (obj instanceof Integer) {
+					msgout.writeInt((Integer) obj);
+				} else if (obj instanceof Short) {
+					msgout.writeShort((Short) obj);
+				} else if (obj instanceof Long) {
+					msgout.writeLong((Long) obj);
+				} else if (obj instanceof Double) {
+					msgout.writeDouble((Double) obj);
+				} else if (obj instanceof Float) {
+					msgout.writeFloat((Float) obj);
+				} else if (obj instanceof Character) {
+					msgout.writeChar((Character) obj);
+				} else {
+					msgout.writeUTF(obj.toString());
+				}
+			}
+		} catch (IOException exception){
+			exception.printStackTrace();
+		}
+		
+		out.write(msgbytes.toByteArray());
+		sendPluginMessage(out, null);
 	}
 	
 	//---BUNGEE GETTERS---//
@@ -205,6 +252,7 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		return createResponseFuture("ServerIP");
 	}
 	
+	
 	//---HELPERS---//
 	private static ByteArrayDataOutput getOutputData(String subchannel) {
 		if (!INITIALIZED) {
@@ -221,16 +269,20 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 			throw new BungeeNoPlayersOnlineException();
 		return pl;
 	}
-	@SuppressWarnings("unchecked")
 	private static <T> CompletableFuture<T> createResponseFuture(String subchannel) {
+		return createResponseFuture(subchannel, null);
+	}
+	@SuppressWarnings("unchecked")
+	private static <T> CompletableFuture<T> createResponseFuture(String subchannel, BungeeMessageConsumer<T> consumer) {
 		CompletableFuture<T> future = new CompletableFuture<T>();
-		ArrayList<CompletableFuture<Object>> futures = QUEUED_FUTURES.get(subchannel);
+		BungeeFutureWrapper<T> wrapper = new BungeeFutureWrapper<T>(future, consumer);
+		ArrayList<BungeeFutureWrapper<Object>> futures = QUEUED_FUTURES.get(subchannel);
 		if (futures == null) {
-			futures = new ArrayList<CompletableFuture<Object>>();
+			futures = new ArrayList<BungeeFutureWrapper<Object>>();
 			QUEUED_FUTURES.put(subchannel, futures);
 		}
 		
-		futures.add((CompletableFuture<Object>) future);
+		futures.add((BungeeFutureWrapper<Object>) wrapper);
 		return future;
 	}
 	private static void sendPluginMessage(ByteArrayDataOutput out, Player player) {
@@ -242,4 +294,5 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	public static void setCustomListener(String subchannel, Consumer<BungeeMessageWrapper> listener) {
 		CUSTOM_LISTENERS.put(subchannel, listener);
 	}
+	
 }

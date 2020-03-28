@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -170,6 +171,13 @@ public class ItemBuilder {
 	public ItemBuilder setTexture(String texture) {
 		if (meta instanceof SkullMeta) {
 			ItemUtils.applyCustomHeadTexture((SkullMeta) meta, texture);
+		}
+		return this;
+	}
+	
+	public ItemBuilder setTexture(OfflinePlayer player) {
+		if (meta instanceof SkullMeta) {
+			((SkullMeta) meta).setOwningPlayer(player);
 		}
 		return this;
 	}
