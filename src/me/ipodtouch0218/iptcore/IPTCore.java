@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import me.ipodtouch0218.iptcore.inventory.GuiInventory;
 import me.ipodtouch0218.iptcore.inventory.InventoryListener;
 
@@ -24,6 +25,9 @@ public class IPTCore {
 		if (instance != null) { return; }
 		plugin = pluginn;
 		instance = new IPTCore();
+		MinecraftVersion.disableUpdateCheck();
+		MinecraftVersion.disableBStats();
+		MinecraftVersion.disablePackageWarning();
 	}
 	public static void onDisable() {
 		instance.invListener.closeAll();

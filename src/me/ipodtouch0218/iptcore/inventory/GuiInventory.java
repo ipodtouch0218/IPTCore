@@ -12,17 +12,30 @@ import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
 import me.ipodtouch0218.iptcore.inventory.runnables.GuiRunnable;
 
+@Getter
 public class GuiInventory {
 
-	private Inventory inv;
+	@Setter(value=AccessLevel.NONE)
+	private PagedUpdater updater;
+	
+	private Inventory inventory;
 	private int size;
 	private String title;
+	@Setter
 	private GuiElement[] elements;
 	private HashSet<GuiRunnable> runnables = new HashSet<>();
-	private HashMap<Object, Object> data = new HashMap<>();
+	private HashMap<Object,Object> customVars = new HashMap<>(); 
+	
+	@Setter
+	private PagedGuiManager pagedManager;
+	@Setter
+	private int pageNumber = -1;
 	
 	public GuiInventory(int size, String title, GuiElement... elements) {
 		if (size % 9 != 0 || size <= 0) {
@@ -32,23 +45,28 @@ public class GuiInventory {
 		this.elements = elements;
 
 		if (title != null) {
-			inv = Bukkit.createInventory(null, size, ChatColor.translateAlternateColorCodes('&', title));
+			inventory = Bukkit.createInventory(null, size, ChatColor.translateAlternateColorCodes('&', title));
 		} else {
-			inv = Bukkit.createInventory(null, size);
+			inventory = Bukkit.createInventory(null, size);
 		}
 		this.title = title;
-		updateInventory();
+		updateInventory(false);
 	}
 	
 	//---METHODS---//
 	public void updateInventory() {
-		if (elements == null) { return; }
+		updateInventory(true);
+	}
+	public void updateInventory(boolean consumer) {
+		if (updater != null && consumer) {
+			updater.accept(this);
+		}
 		for (int i = 0; i < elements.length; i++) {
 			ItemStack item = null;
 			if (elements[i] != null) {
 				item = elements[i].getItem(this);
 			}
-			inv.setItem(i, item);
+			inventory.setItem(i, item);
 		}
 	}
 	
@@ -58,16 +76,17 @@ public class GuiInventory {
 			throw new IllegalArgumentException("Slot # must be between 0 and the containers size! (" + size + ")");
 		}
 		elements[slot] = element;
-		updateInventory();
 	}	
 	public void addElement(GuiElement guiElement) {
 		OptionalInt indexOpt = IntStream.range(0, elements.length)
-			     .filter(i -> (elements[i] == null || elements[i].getItem().getType() == Material.AIR))
+			     .filter(i -> 
+			     	elements[i] == null || 
+			     	elements[i].getItem() == null ||
+			     	elements[i].getItem().getType() == Material.AIR)
 			     .findFirst();
 		
 		if (!indexOpt.isPresent()) { return; }
 		elements[indexOpt.getAsInt()] = guiElement;
-		updateInventory();
 	}
 	
 	public void setRunnables(HashSet<GuiRunnable> runnables) {
@@ -75,17 +94,25 @@ public class GuiInventory {
 	}
 	
 	//---GETTERS---//
-	public HashSet<GuiRunnable> getRunnables() { return runnables; }
-	public HashMap<Object, Object> getData() { return data; }
-	public Inventory getInventory() { return inv; }
-	public int getSize() { return size; }
-	public GuiElement[] getElements() { return elements; }
 	public GuiElement getElement(int slot) { 
 		if (slot < 0 || slot >= size) { return null; }
 		return elements[slot];
 	}
 	
 	public GuiInventory clone() {
-		return new GuiInventory(size, title, Arrays.copyOf(elements, elements.length));
+		GuiInventory newinv = new GuiInventory(size, title, Arrays.copyOf(elements, size));
+		newinv.setUpdateConsumer(updater);
+		newinv.setRunnables(runnables);
+		return newinv;
+	}
+	
+	public long getBlankSlots() {
+		return Arrays.stream(elements)
+				.filter(e -> e == null)
+				.count();
+	}
+
+	public void setUpdateConsumer(PagedUpdater updater) {
+		this.updater = updater;
 	}
 }

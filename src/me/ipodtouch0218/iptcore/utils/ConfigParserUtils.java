@@ -18,6 +18,8 @@ import me.ipodtouch0218.iptcore.inventory.elements.GuiBackButton;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiCloseButton;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiCommandButton;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
+import me.ipodtouch0218.iptcore.inventory.elements.GuiNextPage;
+import me.ipodtouch0218.iptcore.inventory.elements.GuiPreviousPage;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiToggleButton;
 
 public class ConfigParserUtils {
@@ -30,6 +32,8 @@ public class ConfigParserUtils {
 		put("back", GuiBackButton.class);
 		put("toggle", GuiToggleButton.class);
 		put("command", GuiCommandButton.class);
+		put("next-page", GuiNextPage.class);
+		put("previous-page", GuiPreviousPage.class);
 	}};
 	
 	public static GuiInventory parseInventory(ConfigurationSection section) {
@@ -123,7 +127,7 @@ public class ConfigParserUtils {
 		}
 		ItemBuilder builder = new ItemBuilder(new ItemStack(mat, section.getInt("amount", 1), (short) section.getInt("data", 0)));
 		
-		if (mat == Material.PLAYER_HEAD && section.isSet("texture")) {
+		if (section.isSet("texture")) {
 			builder.setTexture(section.getString("texture"));
 		}
 		

@@ -1,17 +1,15 @@
 package me.ipodtouch0218.iptcore.utils;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 
 public class ItemUtils {
 	
@@ -70,20 +68,9 @@ public class ItemUtils {
 		item.setItemMeta(meta);
 	}
 
-    public static void applyCustomHeadTexture(SkullMeta meta, String texture) {
-
-        try {
-        	Class<?> gameProfileClass = Class.forName("com.mojang.authlib.GameProfile");
-        	Class<?> propertyClass = Class.forName("com.mojang.authlib.properties.Property");
-        	
-            Object profile = gameProfileClass.getConstructor(UUID.class, String.class).newInstance(UUID.randomUUID(), "");
-            Object textureProperty = propertyClass.getConstructor(String.class, String.class).newInstance("textures", texture);
-            profile.getClass().getMethod("put", String.class, propertyClass).invoke(profile, "textures", textureProperty);
-            Field profileField = meta.getClass().getDeclaredField("profile");
-            profileField.setAccessible(true);
-            profileField.set(meta, profile);
-        } catch (ClassNotFoundException | IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
+    @SuppressWarnings("deprecation")
+	public static void applyCustomHeadTexture(ItemStack item, String texture) {
+    	UUID hashAsId = new UUID(texture.hashCode(), texture.hashCode());
+    	Bukkit.getUnsafe().modifyItemStack(item, "{SkullOwner:{Id:\"" + hashAsId + "\",Properties:{textures:[{Value:\"" + texture + "\"}]}}}");
     }
 }

@@ -46,6 +46,20 @@ public class GuiBuilder {
 		return setItem(element, x+(y*9));
 	}
 	
+	public GuiBuilder addItem(ItemStack stack) {
+		return addItem(new GuiElement(stack, false));
+	}
+	
+	public GuiBuilder addItem(GuiElement element) {
+		for (int i = 0; i < size; i++) {
+			if (!elements.containsKey(i)) {
+				elements.put(i, element);
+				break;
+			}
+		}
+		return this;
+	}
+	
 	//---BORDER---//
 	public GuiBuilder fillBorder(ItemStack stack, int x1, int y1, int x2, int y2) {
 		return fillBorder(new GuiElement(stack, false), x1, y1, x2, y2);
@@ -103,6 +117,7 @@ public class GuiBuilder {
 	public GuiInventory build() {
 		GuiElement[] elementArray = new GuiElement[size*9];
 		elements.entrySet().stream().filter(e -> (e.getKey() < size*9 && e.getKey() >= 0)).forEach(e -> elementArray[e.getKey()] = e.getValue());
+		
 		GuiInventory inv = new GuiInventory(size*9, title, elementArray);
 		inv.setRunnables(runnables);
 		

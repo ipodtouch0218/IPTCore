@@ -168,16 +168,24 @@ public class ItemBuilder {
 		return this;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public ItemBuilder setTexture(String texture) {
 		if (meta instanceof SkullMeta) {
-			ItemUtils.applyCustomHeadTexture((SkullMeta) meta, texture);
+			if (GenericUtils.isValidPlayerName(texture)) {
+				((SkullMeta) meta).setOwner(texture);
+				return this;
+			}
+			ItemStack build = build();
+			ItemUtils.applyCustomHeadTexture(build, texture);
+			meta = build.getItemMeta();
 		}
 		return this;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public ItemBuilder setTexture(OfflinePlayer player) {
 		if (meta instanceof SkullMeta) {
-			((SkullMeta) meta).setOwningPlayer(player);
+			((SkullMeta) meta).setOwner(player.getName());
 		}
 		return this;
 	}
