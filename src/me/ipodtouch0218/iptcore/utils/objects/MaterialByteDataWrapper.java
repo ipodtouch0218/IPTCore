@@ -32,6 +32,7 @@ public class MaterialByteDataWrapper {
 	public boolean matches(Block b) {
 		return matches(b.getType(), b.getData());
 	}
+	@SuppressWarnings("deprecation")
 	public boolean matches(ItemStack stack) {
 		return matches(stack.getType(), (byte) stack.getDurability());
 	}

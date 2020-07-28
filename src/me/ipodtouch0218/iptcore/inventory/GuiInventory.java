@@ -1,41 +1,28 @@
 package me.ipodtouch0218.iptcore.inventory;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
-import me.ipodtouch0218.iptcore.inventory.runnables.GuiRunnable;
+import me.ipodtouch0218.iptcore.utils.FormatUtils;
 
 @Getter
 public class GuiInventory {
-
-	@Setter(value=AccessLevel.NONE)
-	private PagedUpdater updater;
 	
-	private Inventory inventory;
-	private int size;
-	private String title;
-	@Setter
-	private GuiElement[] elements;
-	private HashSet<GuiRunnable> runnables = new HashSet<>();
-	private HashMap<Object,Object> customVars = new HashMap<>(); 
+	protected Inventory inventory;
+	protected int size;
+	protected String title;
 	
 	@Setter
-	private PagedGuiManager pagedManager;
-	@Setter
-	private int pageNumber = -1;
+	protected GuiElement[] elements;
 	
 	public GuiInventory(int size, String title, GuiElement... elements) {
 		if (size % 9 != 0 || size <= 0) {
@@ -45,29 +32,28 @@ public class GuiInventory {
 		this.elements = elements;
 
 		if (title != null) {
-			inventory = Bukkit.createInventory(null, size, ChatColor.translateAlternateColorCodes('&', title));
+			inventory = Bukkit.createInventory(null, size, FormatUtils.stringColor(title));
 		} else {
 			inventory = Bukkit.createInventory(null, size);
 		}
 		this.title = title;
-		updateInventory(false);
+		updateInventory();
 	}
 	
 	//---METHODS---//
 	public void updateInventory() {
-		updateInventory(true);
-	}
-	public void updateInventory(boolean consumer) {
-		if (updater != null && consumer) {
-			updater.accept(this);
-		}
-		for (int i = 0; i < elements.length; i++) {
-			ItemStack item = null;
-			if (elements[i] != null) {
-				item = elements[i].getItem(this);
+		for (int slot = 0; slot < elements.length; slot++) {
+			GuiElement element = elements[slot];
+			if (element != null) {
+				inventory.setItem(slot, elements[slot].getItem(this));
+			} else {
+				inventory.setItem(slot, null);
 			}
-			inventory.setItem(i, item);
 		}
+		inventory.getViewers().stream()
+			.filter(Player.class::isInstance)
+			.map(Player.class::cast)
+			.forEach(Player::updateInventory);
 	}
 	
 	//---SETTERS---//
@@ -89,10 +75,6 @@ public class GuiInventory {
 		elements[indexOpt.getAsInt()] = guiElement;
 	}
 	
-	public void setRunnables(HashSet<GuiRunnable> runnables) {
-		this.runnables = runnables;
-	}
-	
 	//---GETTERS---//
 	public GuiElement getElement(int slot) { 
 		if (slot < 0 || slot >= size) { return null; }
@@ -100,19 +82,12 @@ public class GuiInventory {
 	}
 	
 	public GuiInventory clone() {
-		GuiInventory newinv = new GuiInventory(size, title, Arrays.copyOf(elements, size));
-		newinv.setUpdateConsumer(updater);
-		newinv.setRunnables(runnables);
-		return newinv;
+		return new GuiInventory(size, title, Arrays.copyOf(elements, size));
 	}
 	
 	public long getBlankSlots() {
 		return Arrays.stream(elements)
 				.filter(e -> e == null)
 				.count();
-	}
-
-	public void setUpdateConsumer(PagedUpdater updater) {
-		this.updater = updater;
 	}
 }

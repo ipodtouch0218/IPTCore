@@ -1,12 +1,12 @@
 package me.ipodtouch0218.iptcore.bungee;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -25,9 +25,11 @@ import me.ipodtouch0218.iptcore.IPTCore;
 
 public class BungeeCommunicationHandler implements PluginMessageListener {
 
+	public static boolean DEBUG;
 	private static boolean INITIALIZED = false;
 	private static BungeeCommunicationHandler INSTANCE;
-	private static HashMap<String, ArrayList<BungeeFutureWrapper<Object>>> QUEUED_FUTURES = new HashMap<>();
+	private static HashMap<String, List<ByteArrayDataOutput>> OUTGOING_MSGS = new HashMap<>();
+	private static HashMap<String, List<BungeeFutureWrapper<Object>>> QUEUED_FUTURES = new HashMap<>();
 	private static HashMap<String, Consumer<BungeeMessageWrapper>> CUSTOM_LISTENERS = new HashMap<>();
 	
 	public void initialize() {
@@ -36,6 +38,12 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	    Bukkit.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "BungeeCord");
 	    Bukkit.getServer().getMessenger().registerIncomingPluginChannel(plugin, "BungeeCord", INSTANCE);
 	    INITIALIZED = true;
+	}
+	
+	public static void uninitialize() {
+		JavaPlugin plugin = IPTCore.plugin;
+		Bukkit.getServer().getMessenger().unregisterIncomingPluginChannel(plugin);
+		Bukkit.getServer().getMessenger().unregisterOutgoingPluginChannel(plugin);
 	}
 	
 	@Override
@@ -47,10 +55,15 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		String subchannel = in.readUTF();
 		BungeeMessageWrapper bmw = new BungeeMessageWrapper(subchannel, player.getUniqueId(), in);
 		
+		debug("Received message " + subchannel);
+		
 		if (QUEUED_FUTURES.containsKey(subchannel)) {
-			ArrayList<BungeeFutureWrapper<Object>> futures = QUEUED_FUTURES.get(subchannel);
+			List<BungeeFutureWrapper<Object>> futures = QUEUED_FUTURES.get(subchannel);
+			List<ByteArrayDataOutput> outgoing = OUTGOING_MSGS.getOrDefault(subchannel, Collections.emptyList());
 			if (futures.size() <= 0)
 				return;
+			
+			debug("outgoing array: " + outgoing);
 			
 			BungeeFutureWrapper<Object> wrapper = futures.get(0);
 			CompletableFuture<Object> future = wrapper.getFuture();
@@ -58,6 +71,12 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 			if (wrapper.getConsumer() != null) {
 				future.complete(wrapper.getConsumer().accept(bmw));
 				futures.remove(0);
+				outgoing.remove(0);
+				if (!outgoing.isEmpty()) {
+					ByteArrayDataOutput out = outgoing.get(0);
+					debug("Sent message " + subchannel);
+					getRandomPlayer().sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
+				}
 				return;
 			}
 			
@@ -101,11 +120,16 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 			}
 			
 			futures.remove(0);
+			outgoing.remove(0);
+			if (!outgoing.isEmpty()) {
+				ByteArrayDataOutput out = outgoing.get(0);
+				debug("Sent message " + subchannel);
+				getRandomPlayer().sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
+				return;
+			}
 		} else if (CUSTOM_LISTENERS.containsKey(subchannel)) {
 			CUSTOM_LISTENERS.get(subchannel).accept(bmw);
 		}
-		
-		
 	}
 	
 	//---BUNGEE FUNCTIONS---//
@@ -276,7 +300,7 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	private static <T> CompletableFuture<T> createResponseFuture(String subchannel, BungeeMessageConsumer<T> consumer) {
 		CompletableFuture<T> future = new CompletableFuture<T>();
 		BungeeFutureWrapper<T> wrapper = new BungeeFutureWrapper<T>(future, consumer);
-		ArrayList<BungeeFutureWrapper<Object>> futures = QUEUED_FUTURES.get(subchannel);
+		List<BungeeFutureWrapper<Object>> futures = QUEUED_FUTURES.get(subchannel);
 		if (futures == null) {
 			futures = new ArrayList<BungeeFutureWrapper<Object>>();
 			QUEUED_FUTURES.put(subchannel, futures);
@@ -288,9 +312,28 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	private static void sendPluginMessage(ByteArrayDataOutput out, Player player) {
 		if (player == null)
 			player = getRandomPlayer();
-		player.sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
+
+		String subchannel = ByteStreams.newDataInput(out.toByteArray()).readUTF();
+		List<ByteArrayDataOutput> outgoing = OUTGOING_MSGS.get(subchannel);
+		if (outgoing == null) {
+			outgoing = new ArrayList<>();
+			OUTGOING_MSGS.put(subchannel, outgoing);
+		}
+		
+		outgoing.add(out);
+		if (outgoing.size() <= 1) {
+			debug("Sent message " + subchannel);
+			player.sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
+		} else {
+			debug("Queued message " + subchannel);
+		}
 	}
 	
+	private static void debug(String msg) {
+		if (DEBUG) {
+			System.out.println("[DEBUG] " + msg);
+		}
+	}	
 	public static void setCustomListener(String subchannel, Consumer<BungeeMessageWrapper> listener) {
 		CUSTOM_LISTENERS.put(subchannel, listener);
 	}

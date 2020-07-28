@@ -1,7 +1,7 @@
 package me.ipodtouch0218.iptcore.utils;
 
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.ChatColor;
@@ -18,9 +18,10 @@ import me.ipodtouch0218.iptcore.inventory.elements.GuiBackButton;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiCloseButton;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiCommandButton;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
-import me.ipodtouch0218.iptcore.inventory.elements.GuiNextPage;
-import me.ipodtouch0218.iptcore.inventory.elements.GuiPreviousPage;
+import me.ipodtouch0218.iptcore.inventory.elements.GuiRefreshButton;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiToggleButton;
+import me.ipodtouch0218.iptcore.inventory.paging.GuiNextPage;
+import me.ipodtouch0218.iptcore.inventory.paging.GuiPreviousPage;
 
 public class ConfigParserUtils {
 
@@ -34,6 +35,7 @@ public class ConfigParserUtils {
 		put("command", GuiCommandButton.class);
 		put("next-page", GuiNextPage.class);
 		put("previous-page", GuiPreviousPage.class);
+		put("refresh", GuiRefreshButton.class);
 	}};
 	
 	public static GuiInventory parseInventory(ConfigurationSection section) {
@@ -53,8 +55,8 @@ public class ConfigParserUtils {
 		}
 		
 		try {
-			int rows = section.getInt("rows", 3);
-			String title = ChatColor.translateAlternateColorCodes('&', section.getString("title", "n/a"));
+			int rows = section.getInt("rows", section.getInt("size", 3));
+			String title = FormatUtils.stringColor(section.getString("title", section.getString("name", "Not Set.")));
 		
 			if (titleReplMap != null) {
 				title = FormatUtils.stringReplaceColor(title, titleReplMap);
@@ -62,6 +64,10 @@ public class ConfigParserUtils {
 			
 			GuiBuilder builder = new GuiBuilder(rows);
 			builder.setTitle(title);
+			
+			List<Integer> pagedSlots = section.getIntegerList("paged-slots");
+			builder.setPagedSlots(pagedSlots);
+			builder.setPaged(!pagedSlots.isEmpty());
 			
 			if (!section.isConfigurationSection("items")) {		
 				return builder.build();
@@ -72,11 +78,8 @@ public class ConfigParserUtils {
 				if (!itemSection.isConfigurationSection(path)) { continue; }
 				ConfigurationSection element = itemSection.getConfigurationSection(path);
 				
-				Class<? extends GuiElement> elementClass = GuiElement.class;
 				String elementType = element.getString("function.name", "").toLowerCase();
-				if (classes != null) {
-					elementClass = classes.getOrDefault(elementType, GuiElement.class);
-				}
+				Class<? extends GuiElement> elementClass = classes.getOrDefault(elementType, GuiElement.class);
 				
 				try {
 					GuiElement newElement = elementClass.getConstructor(ConfigurationSection.class).newInstance(element);
@@ -93,23 +96,29 @@ public class ConfigParserUtils {
 					}
 					default: {
 						String[] slotInts = slots.split(",");
-						Arrays.stream(slotInts)
-							.map(Ints::tryParse)
-							.filter(i -> i != null)
-							.mapToInt(Integer::intValue)
-							.forEach(slot -> builder.setItem(newElement, slot));
-						break;
+						for (String ints : slotInts) {
+							if (ints.matches("\\d+-\\d+")) {
+								String[] split = ints.split("-");
+								Integer from = Ints.tryParse(split[0]);
+								Integer to = Ints.tryParse(split[1]);
+								if (from == null || to == null) break;
+								for (; from < to; from++) {
+									builder.setItem(newElement, from);
+								}
+							} else {
+								Integer slot = Ints.tryParse(ints);
+								if (slot == null) break;
+								builder.setItem(newElement, slot);
+							}
+						}
 					}
 					}
 				} catch (Exception e2) { 
-					
 					// Unable to parse...
+					System.err.printf("Cannot initiate GuiElement type '%s' from config.\n", elementClass.getName());
 					e2.printStackTrace();
-					
 				}
-				
 			}
-			
 			return builder.build();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -118,11 +127,15 @@ public class ConfigParserUtils {
 	}
 	
 	@SuppressWarnings("deprecation")
-	public static ItemStack parseItem_v1_8(ConfigurationSection section) {
+	public static ItemStack parseItem(ConfigurationSection section) {
 		if (section == null) { return null; }
-		Material mat = GenericUtils.getEnumFromString(Material.class, section.getString("type", "").toUpperCase());
+		if (!section.isSet("type")) {
+			System.err.printf("Unable to parse item at '%s' - Material Type Not Specified.\n", section.getCurrentPath());
+			return null;
+		}
+		Material mat = GenericUtils.getEnumFromString(Material.class, section.getString("type").toUpperCase());
 		if (mat == null) {
-			System.err.println("Unable to parse item at '" + section.getCurrentPath() + "' - Unknown Material Type '" + section.getString("type", null) + "'");
+			System.err.printf("Unable to parse item at '%s' - Unknown Material Type '%s'\n", section.getCurrentPath(), section.getString("type"));
 			return null;
 		}
 		ItemBuilder builder = new ItemBuilder(new ItemStack(mat, section.getInt("amount", 1), (short) section.getInt("data", 0)));
@@ -133,7 +146,7 @@ public class ConfigParserUtils {
 		
 		if (section.isSet("name")) {
 			if (section.getString("name").equals("")) {
-				builder.setDisplayName("\u00A7r");
+				builder.setDisplayName("§r");
 			} else {
 				builder.setDisplayName(section.getString("name"));
 			}

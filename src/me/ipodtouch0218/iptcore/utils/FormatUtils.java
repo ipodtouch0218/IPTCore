@@ -13,7 +13,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 
 public class FormatUtils {
 
@@ -73,6 +72,21 @@ public class FormatUtils {
 		return output;
 	}
 	
+	public static String stringColor(String input) {
+		if (input == null || input.equals("")) { return ""; }
+		
+		String current = null;
+		StringBuilder builder = new StringBuilder(input);
+		while ((current = builder.toString()).matches(".*?&#[a-f0-9]{6}.*?")) {
+			int index = current.indexOf("&#");
+			String color = current.substring(index+2, index+8);
+			StringBuilder colorBuilder = new StringBuilder("§x");
+			color.chars().forEach(i -> colorBuilder.append("§").append((char) i));
+			builder.replace(index, index+8, "§x" + colorBuilder.toString());
+		}
+		return ChatColor.translateAlternateColorCodes('&', builder.toString());
+	}
+	
 	public static String stringReplace(String input, Map<?,?> replMap) {
 		if (input == null || input.equals("")) { return ""; }
 		
@@ -83,7 +97,7 @@ public class FormatUtils {
 	}
 	
 	public static String stringReplaceColor(String input, Map<?,?> titleReplMap) {
-		return ChatColor.translateAlternateColorCodes('&', stringReplace(input, titleReplMap));
+		return stringColor(stringReplace(input, titleReplMap));
 	}
 	
 	public static void stringReplaceNameLore(ItemStack input, Map<String,?> replMap) {

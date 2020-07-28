@@ -17,7 +17,6 @@ import org.bukkit.inventory.Inventory;
 
 import me.ipodtouch0218.iptcore.IPTCore;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
-import me.ipodtouch0218.iptcore.inventory.runnables.GuiCloseRunnable;
 
 public class InventoryListener implements Listener {
 
@@ -52,18 +51,7 @@ public class InventoryListener implements Listener {
 	@EventHandler
 	public void onInventoryClose(InventoryCloseEvent e) {
 		UUID playerUUID = e.getPlayer().getUniqueId();
-		if (!histories.containsKey(playerUUID)) { return; }
-		Stack<GuiInventory> history = histories.get(playerUUID);
-		
-		boolean equals = Arrays.equals(history.peek().getInventory().getContents(), 
-				e.getInventory().getContents());
-		
-		if (equals) {
-			history.peek().getRunnables().stream()
-				.filter(GuiCloseRunnable.class::isInstance)
-				.map(GuiCloseRunnable.class::cast)
-				.forEach(run -> run.run(e));
-		}
+		histories.remove(playerUUID);
 	}
 	
 	@EventHandler
@@ -80,7 +68,6 @@ public class InventoryListener implements Listener {
 			histories.remove(playerUUID);
 		}
 	}
-	
 	
 	//---OPEN/CLOSE GUIS---//
 	public void openGui(Player player, GuiInventory inv) {

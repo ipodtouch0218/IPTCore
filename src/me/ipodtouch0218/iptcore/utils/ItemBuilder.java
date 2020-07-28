@@ -14,8 +14,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import de.tr7zw.changeme.nbtapi.NBTItem;
-
 public class ItemBuilder {
 
 	
@@ -96,7 +94,7 @@ public class ItemBuilder {
 			//we cant translate a null string for whatever reason, we need a null check.
 			meta.setDisplayName(null);
 		} else {
-			meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+			meta.setDisplayName(FormatUtils.stringColor(name));
 		}
 		return this; 
 	}
@@ -158,13 +156,7 @@ public class ItemBuilder {
 	}
 	
 	public ItemBuilder setUnbreakable(boolean value) {
-		currentStack.setItemMeta(meta);
-		
-		NBTItem nbt = new NBTItem(currentStack);
-		nbt.setBoolean("Unbreakable", value);
-		currentStack = nbt.getItem();
-		
-		meta = currentStack.getItemMeta();
+		meta.setUnbreakable(value);
 		return this;
 	}
 	

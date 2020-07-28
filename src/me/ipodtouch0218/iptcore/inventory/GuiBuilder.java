@@ -1,27 +1,29 @@
 package me.ipodtouch0218.iptcore.inventory;
 
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 
 import org.bukkit.inventory.ItemStack;
 
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
-import me.ipodtouch0218.iptcore.inventory.runnables.GuiRunnable;
+import me.ipodtouch0218.iptcore.inventory.paging.PagedGuiInventory;
 
 public class GuiBuilder {
 
 	private HashMap<Integer, GuiElement> elements = new HashMap<>();
-	private int size = 1;
+	private int rows = 1;
 	private String title;
-	private HashSet<GuiRunnable> runnables = new HashSet<>();
+	
+	private boolean paged;
+	private List<Integer> pagedSlots;
 	
 	public GuiBuilder(int size) {
-		this.size = size;
+		this.rows = size;
 	}
 	
 	//---SETTINGS---//
 	public GuiBuilder setRows(int size) { 
-		this.size = size;
+		this.rows = size;
 		return this;
 	}
 	
@@ -51,12 +53,23 @@ public class GuiBuilder {
 	}
 	
 	public GuiBuilder addItem(GuiElement element) {
-		for (int i = 0; i < size; i++) {
+		for (int i = 0; i < rows; i++) {
 			if (!elements.containsKey(i)) {
 				elements.put(i, element);
 				break;
 			}
 		}
+		return this;
+	}
+	
+	public GuiBuilder setPaged(boolean paged) {
+		this.paged = paged;
+		return this;
+	}
+	
+	public GuiBuilder setPagedSlots(List<Integer> pagedSlots) {
+		this.pagedSlots = pagedSlots;
+		this.paged = pagedSlots != null;
 		return this;
 	}
 	
@@ -100,27 +113,27 @@ public class GuiBuilder {
 		return fill(new GuiElement(stack, false));
 	}
 	public GuiBuilder fill(GuiElement element) {
-		for (int i = 0; i < size*9; i++) {
+		for (int i = 0; i < rows*9; i++) {
 			elements.put(i, element);
 		}
 		return this;
 	}
 	
-	//---EVENTS---//
-	public GuiBuilder addGuiRunnable(GuiRunnable e) {
-		runnables.add(e);
-		return this;
-	}
-	
-	
 	//---BUILD---//
 	public GuiInventory build() {
-		GuiElement[] elementArray = new GuiElement[size*9];
-		elements.entrySet().stream().filter(e -> (e.getKey() < size*9 && e.getKey() >= 0)).forEach(e -> elementArray[e.getKey()] = e.getValue());
+		int slots = rows*9;
+		GuiElement[] elementArray = new GuiElement[slots];
+		elements.entrySet().stream()
+			.filter(e -> (e.getKey() < slots && e.getKey() >= 0))
+			.forEach(e -> elementArray[e.getKey()] = e.getValue());
 		
-		GuiInventory inv = new GuiInventory(size*9, title, elementArray);
-		inv.setRunnables(runnables);
+		GuiInventory ret;
+		if (paged) {
+			ret = new PagedGuiInventory(slots, title, elementArray, pagedSlots, null);
+		} else {
+			ret = new GuiInventory(slots, title, elementArray);
+		}
 		
-		return inv;
+		return ret;
 	}
 }

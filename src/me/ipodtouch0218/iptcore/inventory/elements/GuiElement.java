@@ -18,7 +18,7 @@ public class GuiElement {
 		this.closeOnClick = closeOnClick;
 	}
 	public GuiElement(ConfigurationSection section) {
-		stack = ConfigParserUtils.parseItem_v1_8(section);
+		stack = ConfigParserUtils.parseItem(section);
 		closeOnClick = section.getBoolean("close", false);
 	}
 	
