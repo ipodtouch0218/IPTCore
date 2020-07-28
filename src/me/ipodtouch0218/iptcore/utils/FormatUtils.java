@@ -84,7 +84,11 @@ public class FormatUtils {
 			color.chars().forEach(i -> colorBuilder.append("§").append((char) i));
 			builder.replace(index, index+8, "§x" + colorBuilder.toString());
 		}
-		return ChatColor.translateAlternateColorCodes('&', builder.toString());
+		try {
+			return ChatColor.translateAlternateColorCodes('&', builder.toString());
+		} catch (Throwable t) {
+			return net.md_5.bungee.api.ChatColor.translateAlternateColorCodes('&', builder.toString());
+		}
 	}
 	
 	public static String stringReplace(String input, Map<?,?> replMap) {
