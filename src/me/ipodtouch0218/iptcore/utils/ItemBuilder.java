@@ -156,7 +156,15 @@ public class ItemBuilder {
 	}
 	
 	public ItemBuilder setUnbreakable(boolean value) {
-		meta.setUnbreakable(value);
+		try {
+			meta.setUnbreakable(value);
+		} catch (Throwable e) {
+			if (value) {
+				meta.addEnchant(Enchantment.DURABILITY, 10, true);
+			} else {
+				meta.removeEnchant(Enchantment.DURABILITY);
+			}
+		}
 		return this;
 	}
 	
