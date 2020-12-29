@@ -22,7 +22,9 @@ public class IPTCore {
 	
 	//---STATIC METHODS---//
 	public static void initialize(JavaPlugin pluginn) {
-		if (instance != null) { return; }
+		if (instance != null) { 
+			onDisable();
+		}
 		plugin = pluginn;
 		instance = new IPTCore();
 	}

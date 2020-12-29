@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
@@ -168,5 +167,10 @@ public class ConfigParserUtils {
 		builder.setGlowing(section.getBoolean("enchanted", false));
 		
 		return builder.build();
+	}
+	
+	@Deprecated
+	public static ItemStack parseItem_v1_8(ConfigurationSection section) {
+		return parseItem(section);
 	}
 }
