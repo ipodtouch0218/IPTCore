@@ -1,16 +1,21 @@
 package me.ipodtouch0218.iptcore.inventory;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.OptionalInt;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.clip.placeholderapi.PlaceholderAPI;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
 import me.ipodtouch0218.iptcore.utils.FormatUtils;
 
@@ -45,7 +50,19 @@ public class GuiInventory {
 		for (int slot = 0; slot < elements.length; slot++) {
 			GuiElement element = elements[slot];
 			if (element != null) {
-				inventory.setItem(slot, elements[slot].getItem(this));
+				ItemStack item = elements[slot].getItem(this).clone();
+				if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") && inventory.getViewers().size() == 1) {
+					Player pl = (Player) inventory.getViewers().get(0);
+					ItemMeta meta = item.getItemMeta();
+					if (meta.hasDisplayName()) {
+						meta.setDisplayName(PlaceholderAPI.setPlaceholders(pl, meta.getDisplayName()));
+					}
+					if (meta.hasLore()) {
+						meta.setLore(PlaceholderAPI.setPlaceholders(pl, meta.getLore()));
+					}
+					item.setItemMeta(meta);
+				}
+				inventory.setItem(slot, item);
 			} else {
 				inventory.setItem(slot, null);
 			}

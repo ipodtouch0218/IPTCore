@@ -34,6 +34,9 @@ public class FormatUtils {
 		TIMEUNIT_SUFFIXES.put(TimeUnit.HOURS, "h");
 		TIMEUNIT_SUFFIXES.put(TimeUnit.DAYS, "d");
 	}
+	public static final ChatColor[] ALL_COLORS = {ChatColor.AQUA, ChatColor.BLACK, ChatColor.BLUE, ChatColor.DARK_AQUA,
+			ChatColor.DARK_BLUE, ChatColor.DARK_GRAY, ChatColor.DARK_GREEN, ChatColor.DARK_PURPLE, ChatColor.DARK_RED,
+			ChatColor.GOLD, ChatColor.GRAY, ChatColor.GREEN, ChatColor.LIGHT_PURPLE, ChatColor.RED, ChatColor.YELLOW, ChatColor.WHITE};
 	
 	public static String formatDurationMillis(long duration, TimeUnit... units) {
 		String output = "";
@@ -113,5 +116,12 @@ public class FormatUtils {
 			meta.setLore(meta.getLore().stream().map(str -> stringReplace(str, replMap)).collect(Collectors.toList()));
 		}
 		input.setItemMeta(meta);
+	}
+	
+	public static String translateCertainColorCodes(char altChar, String in, ChatColor... colors) {
+		for (ChatColor cc : colors) {
+			in = in.replace(altChar + "" + cc.getChar(), cc.toString());
+		}
+		return in;
 	}
 }

@@ -1,5 +1,6 @@
 package me.ipodtouch0218.iptcore.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,9 +65,30 @@ public class ConfigParserUtils {
 			GuiBuilder builder = new GuiBuilder(rows);
 			builder.setTitle(title);
 			
-			List<Integer> pagedSlots = section.getIntegerList("paged-slots");
-			builder.setPagedSlots(pagedSlots);
-			builder.setPaged(!pagedSlots.isEmpty());
+			if (section.isSet("paged-slots")) {
+				List<Integer> pagedSlots = new ArrayList<>();
+				
+				String slots = section.getString("paged-slots");
+				String[] slotInts = slots.split(",");
+				for (String ints : slotInts) {
+					if (ints.matches("\\d+-\\d+")) {
+						String[] split = ints.split("-");
+						Integer from = Ints.tryParse(split[0]);
+						Integer to = Ints.tryParse(split[1]);
+						if (from == null || to == null) break;
+						for (; from < to; from++) {
+							pagedSlots.add(from);
+						}
+					} else {
+						Integer slot = Ints.tryParse(ints);
+						if (slot == null) break;
+						pagedSlots.add(slot);
+					}
+				}
+				
+				builder.setPagedSlots(pagedSlots);
+				builder.setPaged(true);
+			}
 			
 			if (!section.isConfigurationSection("items")) {		
 				return builder.build();

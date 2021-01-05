@@ -10,7 +10,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 
@@ -30,6 +29,8 @@ public class InventoryListener implements Listener {
 		if (history.size() <= 0) { return; }
 		GuiInventory currentInv = history.peek();
 		Inventory topInv = e.getView().getTopInventory();
+		
+		if (currentInv == null || topInv == null) { return; }
 		
 		boolean equals = topInv.equals(currentInv.getInventory());
 		
@@ -88,6 +89,8 @@ public class InventoryListener implements Listener {
 		for (Entry<UUID,Stack<GuiInventory>> e : histories.entrySet()) {
 			Player pl = Bukkit.getPlayer(e.getKey());
 			if (pl == null) { continue; }
+			if (pl.getOpenInventory() == null || pl.getOpenInventory().getTopInventory() == null) { continue; }
+			if (e.getValue() == null || e.getValue().peek() == null) { continue; }
 			if (pl.getOpenInventory().getTopInventory().equals(e.getValue().peek().getInventory())) {
 				pl.closeInventory();
 			}

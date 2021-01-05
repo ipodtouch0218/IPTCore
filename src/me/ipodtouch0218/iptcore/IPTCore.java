@@ -35,6 +35,7 @@ public class IPTCore {
 	
 	public static void openGui(Player player, GuiInventory gui) {
 		instance.invListener.openGui(player, gui);
+		gui.updateInventory();
 	}
 	
 	public static void openPreviousGui(Player player) {
