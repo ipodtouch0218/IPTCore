@@ -1,9 +1,8 @@
 package me.ipodtouch0218.iptcore.inventory;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
 import java.util.OptionalInt;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.bukkit.Bukkit;
@@ -28,6 +27,8 @@ public class GuiInventory {
 	
 	@Setter
 	protected GuiElement[] elements;
+	@Getter
+	protected HashMap<Object,Object> customVars = new HashMap<>();
 	
 	public GuiInventory(int size, String title, GuiElement... elements) {
 		if (size % 9 != 0 || size <= 0) {
