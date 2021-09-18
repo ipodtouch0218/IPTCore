@@ -2,7 +2,9 @@ package me.ipodtouch0218.iptcore.inventory;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.OptionalInt;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.bukkit.Bukkit;
@@ -19,15 +21,16 @@ import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
 import me.ipodtouch0218.iptcore.utils.FormatUtils;
 
 @Getter
-public class GuiInventory {
+public class GuiInventory implements Cloneable {
 	
-	protected Inventory inventory;
+	private HashMap<UUID, Inventory> inventories = new HashMap<>();
 	protected int size;
 	protected String title;
+	@Setter
+	protected NullElementListener nullElementListener;
 	
 	@Setter
 	protected GuiElement[] elements;
-	@Getter
 	protected HashMap<Object,Object> customVars = new HashMap<>();
 	
 	public GuiInventory(int size, String title, GuiElement... elements) {
@@ -36,22 +39,23 @@ public class GuiInventory {
 		}
 		this.size = size;
 		this.elements = elements;
-
-		if (title != null) {
-			inventory = Bukkit.createInventory(null, size, FormatUtils.stringColor(title));
-		} else {
-			inventory = Bukkit.createInventory(null, size);
-		}
-		this.title = title;
+		this.title = FormatUtils.stringColor(title);
+		
 		updateInventory();
 	}
 	
 	//---METHODS---//
 	public void updateInventory() {
+		for (Entry<UUID, Inventory> entry : inventories.entrySet()) {
+			updateInventory(Bukkit.getPlayer(entry.getKey()), entry.getValue());
+		}
+	}
+	
+	public void updateInventory(Player player, Inventory inventory) {
 		for (int slot = 0; slot < elements.length; slot++) {
 			GuiElement element = elements[slot];
 			if (element != null) {
-				ItemStack item = elements[slot].getItem(this).clone();
+				ItemStack item = elements[slot].getItem(player, this).clone();
 				if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") && inventory.getViewers().size() == 1) {
 					Player pl = (Player) inventory.getViewers().get(0);
 					ItemMeta meta = item.getItemMeta();
@@ -68,10 +72,20 @@ public class GuiInventory {
 				inventory.setItem(slot, null);
 			}
 		}
+
 		inventory.getViewers().stream()
 			.filter(Player.class::isInstance)
 			.map(Player.class::cast)
 			.forEach(Player::updateInventory);
+	}
+	
+	public Inventory getInventory(Player player) {
+		if (inventories.containsKey(player.getUniqueId()))
+			return inventories.get(player.getUniqueId());
+		Inventory inv = Bukkit.createInventory(new GuiInventoryHolder(), size, (title != null ? FormatUtils.stringColor(title) : null));
+		inventories.put(player.getUniqueId(), inv);
+		updateInventory(player, inv);
+		return inv;
 	}
 	
 	//---SETTERS---//
@@ -100,7 +114,7 @@ public class GuiInventory {
 	}
 	
 	public GuiInventory clone() {
-		return new GuiInventory(size, title, Arrays.copyOf(elements, size));
+		return new GuiInventory(size, title, elements.clone());
 	}
 	
 	public long getBlankSlots() {

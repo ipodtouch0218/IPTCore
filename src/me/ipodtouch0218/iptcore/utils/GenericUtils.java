@@ -40,7 +40,7 @@ public class GenericUtils {
 	}
 	
 	public static boolean isValidPlayerName(String in) {
-		return in.matches("[a-zA-Z0-9_]{3,16}");
+		return in.matches("[a-zA-Z0-9_]{1,16}");
 	}
 	
 	public static <T extends Enum<T>> T getEnumFromString(Class<T> enumClass, String input) {

@@ -30,11 +30,14 @@ public class GuiElement {
 	}
 	
 	//---GETTERS---//
-	public ItemStack getItem() { 
-		return stack; 
+	public ItemStack getItem() {
+		return stack;
 	}
-	public ItemStack getItem(GuiInventory inventory) {
-		return getItem();
+	public ItemStack getItem(Player player) { 
+		return getItem(); 
+	}
+	public ItemStack getItem(Player player, GuiInventory inventory) {
+		return getItem(player);
 	}
 	public boolean closeOnClick() { 
 		return closeOnClick;

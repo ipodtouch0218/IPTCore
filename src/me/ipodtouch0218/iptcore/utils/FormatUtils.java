@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
@@ -75,6 +76,12 @@ public class FormatUtils {
 		return output;
 	}
 	
+	public static String formatItemName(ItemStack item) {
+		if (item.getItemMeta().hasDisplayName())
+			return item.getItemMeta().getDisplayName();
+		return WordUtils.capitalizeFully(item.getType().name().replace("_", " "));
+	}
+	
 	public static String stringColor(String input) {
 		if (input == null || input.equals("")) { return ""; }
 		
@@ -94,7 +101,7 @@ public class FormatUtils {
 		}
 	}
 	
-	public static String stringReplace(String input, Map<?,?> replMap) {
+	public static String stringReplace(String input, Map<? extends Object,? extends Object> replMap) {
 		if (input == null || input.equals("")) { return ""; }
 		
 		for (Entry<?,?> replacement : replMap.entrySet()) {
@@ -103,11 +110,11 @@ public class FormatUtils {
 		return input;
 	}
 	
-	public static String stringReplaceColor(String input, Map<?,?> titleReplMap) {
+	public static String stringReplaceColor(String input, Map<? extends Object,? extends Object> titleReplMap) {
 		return stringColor(stringReplace(input, titleReplMap));
 	}
 	
-	public static void stringReplaceNameLore(ItemStack input, Map<String,?> replMap) {
+	public static void stringReplaceNameLore(ItemStack input, Map<? extends Object,? extends Object> replMap) {
 		ItemMeta meta = input.getItemMeta();
 		if (meta.hasDisplayName()) {
 			meta.setDisplayName(stringReplace(meta.getDisplayName(), replMap));

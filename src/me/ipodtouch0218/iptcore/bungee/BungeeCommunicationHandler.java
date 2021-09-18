@@ -32,8 +32,8 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	private static HashMap<String, List<BungeeFutureWrapper<Object>>> QUEUED_FUTURES = new HashMap<>();
 	private static HashMap<String, Consumer<BungeeMessageWrapper>> CUSTOM_LISTENERS = new HashMap<>();
 	
-	public void initialize() {
-		INSTANCE = this;
+	public static void initialize() {
+		INSTANCE = new BungeeCommunicationHandler();
 		JavaPlugin plugin = IPTCore.plugin;
 	    Bukkit.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "BungeeCord");
 	    Bukkit.getServer().getMessenger().registerIncomingPluginChannel(plugin, "BungeeCord", INSTANCE);
@@ -59,7 +59,7 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		
 		if (QUEUED_FUTURES.containsKey(subchannel)) {
 			List<BungeeFutureWrapper<Object>> futures = QUEUED_FUTURES.get(subchannel);
-			List<ByteArrayDataOutput> outgoing = OUTGOING_MSGS.getOrDefault(subchannel, Collections.emptyList());
+			List<ByteArrayDataOutput> outgoing = OUTGOING_MSGS.get(subchannel);
 			if (futures.size() <= 0)
 				return;
 			
@@ -70,12 +70,14 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 			
 			if (wrapper.getConsumer() != null) {
 				future.complete(wrapper.getConsumer().accept(bmw));
-				futures.remove(0);
-				outgoing.remove(0);
-				if (!outgoing.isEmpty()) {
-					ByteArrayDataOutput out = outgoing.get(0);
-					debug("Sent message " + subchannel);
-					getRandomPlayer().sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
+				if (futures != null) futures.remove(0);
+				if (outgoing != null) {
+					outgoing.remove(0);
+					if (!outgoing.isEmpty()) {
+						ByteArrayDataOutput out = outgoing.get(0);
+						debug("Sent message " + subchannel);
+						getRandomPlayer().sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
+					}
 				}
 				return;
 			}
@@ -137,19 +139,19 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		ByteArrayDataOutput out = getOutputData("ConnectOther");
 		out.writeUTF(player);
 		out.writeUTF(server);
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, false);
 	}
 	public static void kickPlayer(String player, String reason) {
 		ByteArrayDataOutput out = getOutputData("KickPlayer");
 		out.writeUTF(player);
 		out.writeUTF(reason);
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, false);
 	}
 	public static void sendPlayerChatMessage(String player, String message) {
 		ByteArrayDataOutput out = getOutputData("Message");
 		out.writeUTF(player);
 		out.writeUTF(message);
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, false);
 	}
 	public static void sendAllChatMessage(String message) {
 		sendPlayerChatMessage("ALL", message);
@@ -175,6 +177,8 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 					msgout.writeFloat((Float) obj);
 				} else if (obj instanceof Character) {
 					msgout.writeChar((Character) obj);
+				} else if (obj instanceof Boolean) {
+					msgout.writeBoolean((Boolean) obj);
 				} else {
 					msgout.writeUTF(obj.toString());
 				}
@@ -185,7 +189,7 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		
 		out.writeShort(msgbytes.toByteArray().length);
 		out.write(msgbytes.toByteArray());
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, false);
 	}
 	public static void forwardMessageToOnlineServers(String subchannel, Object... message) {
 		forwardMessageToServer(subchannel, "ONLINE", message);
@@ -218,6 +222,8 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 					msgout.writeFloat((Float) obj);
 				} else if (obj instanceof Character) {
 					msgout.writeChar((Character) obj);
+				} else if (obj instanceof Boolean) {
+					msgout.writeBoolean((Boolean) obj);
 				} else {
 					msgout.writeUTF(obj.toString());
 				}
@@ -227,20 +233,20 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		}
 		
 		out.write(msgbytes.toByteArray());
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, false);
 	}
 	
 	//---BUNGEE GETTERS---//
 	public static CompletableFuture<String> getPlayerIP(String player) {
 		ByteArrayDataOutput out = getOutputData("IP");
 		out.writeUTF(player);
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, true);
 		return createResponseFuture("IP");
 	}
 	public static CompletableFuture<Integer> getServerPlayerCount(String server) {
 		ByteArrayDataOutput out = getOutputData("PlayerCount");
 		out.writeUTF(server);
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, true);
 		return createResponseFuture("PlayerCount");
 	}
 	public static CompletableFuture<Integer> getAllPlayerCount() {
@@ -249,30 +255,30 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	public static CompletableFuture<String[]> getServerPlayerList(String server) {
 		ByteArrayDataOutput out = getOutputData("PlayerList");
 		out.writeUTF(server);
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, true);
 		return createResponseFuture("PlayerList");
 	}
 	public static CompletableFuture<String[]> getAllPlayerList() {
 		return getServerPlayerList("ALL");
 	}
 	public static CompletableFuture<String[]> getServers() {
-		sendPluginMessage(getOutputData("GetServers"), null);
+		sendPluginMessage(getOutputData("GetServers"), null, true);
 		return createResponseFuture("GetServers");
 	}
 	public static CompletableFuture<String> getServerName() {
-		sendPluginMessage(getOutputData("GetServer"), null);
+		sendPluginMessage(getOutputData("GetServer"), null, true);
 		return createResponseFuture("GetServer");
 	}
 	public static CompletableFuture<UUID> getTrueUUID(String player) {
 		ByteArrayDataOutput out = getOutputData("UUIDOther");
 		out.writeUTF(player);
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, true);
 		return createResponseFuture("UUIDOther");
 	}
 	public static CompletableFuture<String> getServerIP(String server) {
 		ByteArrayDataOutput out = getOutputData("ServerIP");
 		out.writeUTF(server);
-		sendPluginMessage(out, null);
+		sendPluginMessage(out, null, true);
 		return createResponseFuture("ServerIP");
 	}
 	
@@ -280,7 +286,7 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 	//---HELPERS---//
 	private static ByteArrayDataOutput getOutputData(String subchannel) {
 		if (!INITIALIZED) {
-			new BungeeCommunicationHandler().initialize();
+			initialize();
 		}
 		
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -309,23 +315,31 @@ public class BungeeCommunicationHandler implements PluginMessageListener {
 		futures.add((BungeeFutureWrapper<Object>) wrapper);
 		return future;
 	}
-	private static void sendPluginMessage(ByteArrayDataOutput out, Player player) {
+	private static void sendPluginMessage(ByteArrayDataOutput out, Player player, boolean response) {
 		if (player == null)
 			player = getRandomPlayer();
 
 		String subchannel = ByteStreams.newDataInput(out.toByteArray()).readUTF();
-		List<ByteArrayDataOutput> outgoing = OUTGOING_MSGS.get(subchannel);
-		if (outgoing == null) {
-			outgoing = new ArrayList<>();
-			OUTGOING_MSGS.put(subchannel, outgoing);
-		}
-		
-		outgoing.add(out);
-		if (outgoing.size() <= 1) {
+		if (response) {
+			List<ByteArrayDataOutput> outgoing = OUTGOING_MSGS.get(subchannel);
+			if (outgoing == null) {
+				outgoing = new ArrayList<>();
+				OUTGOING_MSGS.put(subchannel, outgoing);
+			}
+			
+			List<BungeeFutureWrapper<Object>> futures = QUEUED_FUTURES.get(subchannel);
+			if (futures == null || futures.isEmpty()) {
+				//we can send instantly.
+				debug("Sent message " + subchannel);
+				player.sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
+			} else {
+				//we have to wait for the next one.
+				debug("Queued message " + subchannel);
+				outgoing.add(out);
+			}
+		} else {
 			debug("Sent message " + subchannel);
 			player.sendPluginMessage(IPTCore.plugin, "BungeeCord", out.toByteArray());
-		} else {
-			debug("Queued message " + subchannel);
 		}
 	}
 	

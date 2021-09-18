@@ -10,8 +10,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import me.ipodtouch0218.iptcore.IPTCore;
 import me.ipodtouch0218.iptcore.inventory.elements.GuiElement;
@@ -24,52 +24,45 @@ public class InventoryListener implements Listener {
 	public void onInventoryClick(InventoryClickEvent e) {
 		UUID playerUUID = e.getWhoClicked().getUniqueId();
 		
-		Stack<GuiInventory> history = histories.get(playerUUID);
-		if (history == null) { return; }
-		if (history.size() <= 0) { return; }
-		GuiInventory currentInv = history.peek();
-		Inventory topInv = e.getView().getTopInventory();
-		
-		if (currentInv == null || topInv == null) { return; }
-		
-		boolean equals = topInv.equals(currentInv.getInventory());
-		
-		if (!equals) { return; }
+		if (!isCustomInventory(e.getView().getTopInventory())) {
+			histories.remove(playerUUID);
+			return;
+		}
 		
 		e.setCancelled(true);
+		GuiInventory currentInv = histories.get(playerUUID).peek();
 		GuiElement element = currentInv.getElement(e.getRawSlot());
+		
 		
 		if (element != null) {
 			element.onClick((Player) e.getWhoClicked(), currentInv, e.getClick());
 			if (element.closeOnClick()) {
 				e.getWhoClicked().closeInventory();
 			}
+		} else {
+			if (currentInv.getNullElementListener() != null)
+				currentInv.getNullElementListener().onClick(e);
 		}
 	}
 	
-	
-	@EventHandler
-	public void onInventoryOpen(InventoryOpenEvent e) {
-		UUID playerUUID = e.getPlayer().getUniqueId();
-		if (!histories.containsKey(playerUUID)) { return; }
-		Stack<GuiInventory> history = histories.get(playerUUID);
-		
-		boolean equals = e.getInventory().equals(history.peek().getInventory());
-		
-		if (!equals) {
-			//different inventory opened than expected one, remove history
-			histories.remove(playerUUID);
-		}
+	public boolean isCustomInventory(Inventory inv) {
+		return inv.getHolder() instanceof GuiInventoryHolder;
 	}
 	
 	//---OPEN/CLOSE GUIS---//
 	public void openGui(Player player, GuiInventory inv) {
-		Stack<GuiInventory> history = histories.get(player.getUniqueId());
-		if (history == null) {
-			history = new Stack<GuiInventory>();
-			histories.put(player.getUniqueId(), history);
-		}
-		player.openInventory(history.push(inv).getInventory());
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				Stack<GuiInventory> history = histories.get(player.getUniqueId());
+				if (history == null) {
+					history = new Stack<GuiInventory>();
+					histories.put(player.getUniqueId(), history);
+				}
+				history.push(inv);
+				player.openInventory(inv.getInventory(player));
+			}
+		}.runTaskLater(IPTCore.plugin, 1);
 	}
 	public void openPreviousGui(Player player) {
 		player.closeInventory();
@@ -79,9 +72,7 @@ public class InventoryListener implements Listener {
 		if (history.isEmpty()) {
 			return;
 		}
-		Bukkit.getScheduler().runTaskLater(IPTCore.plugin, ()-> {
-			player.openInventory(history.peek().getInventory());
-		}, 1);
+		player.openInventory(history.peek().getInventory(player));
 	}
 	
 	//---CLOSEALL---//
@@ -90,8 +81,8 @@ public class InventoryListener implements Listener {
 			Player pl = Bukkit.getPlayer(e.getKey());
 			if (pl == null) { continue; }
 			if (pl.getOpenInventory() == null || pl.getOpenInventory().getTopInventory() == null) { continue; }
-			if (e.getValue() == null || e.getValue().peek() == null) { continue; }
-			if (pl.getOpenInventory().getTopInventory().equals(e.getValue().peek().getInventory())) {
+			if (e.getValue() == null || e.getValue().isEmpty()) { continue; }
+			if (pl.getOpenInventory().getTopInventory().equals(e.getValue().peek().getInventory(pl))) {
 				pl.closeInventory();
 			}
 		}

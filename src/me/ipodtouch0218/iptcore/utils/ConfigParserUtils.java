@@ -46,7 +46,7 @@ public class ConfigParserUtils {
 		return parseInventory(section, classes, null);
 	}
 	
-	public static GuiInventory parseInventory(ConfigurationSection section, Map<String,Class<? extends GuiElement>> classes, Map<Object,Object> titleReplMap) {
+	public static GuiInventory parseInventory(ConfigurationSection section, Map<String,Class<? extends GuiElement>> classes, Map<? extends Object, ? extends Object> titleReplMap) {
 		if (section == null) { return null; }
 		if (classes == null) {
 			classes = DEFAULT_ELEMENTS;
@@ -123,7 +123,7 @@ public class ConfigParserUtils {
 								Integer from = Ints.tryParse(split[0]);
 								Integer to = Ints.tryParse(split[1]);
 								if (from == null || to == null) break;
-								for (; from < to; from++) {
+								for (; from <= to; from++) {
 									builder.setItem(newElement, from);
 								}
 							} else {

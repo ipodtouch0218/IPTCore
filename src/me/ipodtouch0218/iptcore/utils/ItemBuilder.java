@@ -29,6 +29,7 @@ public class ItemBuilder {
 	public ItemBuilder(Material mat) {
 		this(new ItemStack(mat));
 	}
+	
 	/**
 	 * Creates an ItemBuilder with the given ItemStack. Does not clone
 	 * the itemstack, see {@link ItemBuilder#copyOf(ItemStack)}
