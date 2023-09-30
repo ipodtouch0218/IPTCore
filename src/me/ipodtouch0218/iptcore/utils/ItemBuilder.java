@@ -191,6 +191,15 @@ public class ItemBuilder {
 		return this;
 	}
 	
+	public ItemBuilder setCustomData(int value) {
+		try {
+			meta.setCustomModelData(value);
+		} catch (Exception e) {
+			
+		}
+		return this;
+	}
+	
 	//---Misc Features---//
 	public ItemBuilder setGlowing(boolean value) {
 		if (value) {

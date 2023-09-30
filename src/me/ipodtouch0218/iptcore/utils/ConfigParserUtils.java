@@ -147,7 +147,7 @@ public class ConfigParserUtils {
 		}
 	}
 	
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "unchecked" })
 	public static ItemStack parseItem(ConfigurationSection section) {
 		if (section == null) { return null; }
 		if (!section.isSet("type")) {
@@ -178,15 +178,62 @@ public class ConfigParserUtils {
 		builder.setUnbreakable(section.getBoolean("unbreakable", false));
 
 		for (Map<?,?> enchs : section.getMapList("enchantments")) {
-			@SuppressWarnings("unchecked")
 			Map<Object,Object> casted = (Map<Object,Object>) enchs;
 			try {
-				Enchantment name = Enchantment.getByName((String) enchs.get("type"));
+				Enchantment name = Enchantment.getByName((String) casted.get("type"));
 				int level = (Integer) (casted.get("level"));
 				builder.addEnchantment(name, level);
 			} catch (Exception e) {}
 		}
 		builder.setGlowing(section.getBoolean("enchanted", false));
+		
+		return builder.build();
+	}
+	
+	@SuppressWarnings({ "unchecked", "deprecation" })
+	public static ItemStack parseItem(Map<Object, Object> map) {
+		if (map == null) { return null; }
+		if (!map.containsKey("type")) {
+			System.err.println("Unable to parse item - Material Type Not Specified.");
+			return null;
+		}
+		Material mat = GenericUtils.getEnumFromString(Material.class, ((String) (map.get("type"))).toUpperCase());
+		if (mat == null) {
+			System.err.printf("Unable to parse item - Unknown Material Type '%s'\n", map.get("type"));
+			return null;
+		}
+		
+		ItemBuilder builder = new ItemBuilder(new ItemStack(mat, (int) (map.getOrDefault("amount", 1)), ((Integer) (map.getOrDefault("data", 0))).shortValue()));
+		
+		if (map.containsKey("texture")) {
+			builder.setTexture((String) map.get("texture"));
+		}
+		
+		if (map.containsKey("name")) {
+			if (map.get("name").equals("")) {
+				builder.setDisplayName("§r");
+			} else {
+				builder.setDisplayName((String) map.get("name"));
+			}
+		}
+		if (map.containsKey("lore")) {
+			builder.setLore((List<String>) map.get("lore"));
+		}
+		builder.setUnbreakable(((String) (map.getOrDefault("unbreakable", "false"))).equalsIgnoreCase("true"));
+
+		if (map.containsKey("enchantments")) {
+			List<Map<Object, Object>> enchantmentList = (List<Map<Object, Object>>) map.get("enchantments");
+			
+			for (Map<Object, Object> enchs : enchantmentList) {
+				try {
+					Enchantment name = Enchantment.getByName((String) enchs.get("type"));
+					int level = (Integer) (enchs.get("level"));
+					builder.addEnchantment(name, level);
+				} catch (Exception e) {}
+			}
+		}
+		
+		builder.setGlowing(((String) (map.getOrDefault("enchanted", "false"))).equalsIgnoreCase("true"));
 		
 		return builder.build();
 	}

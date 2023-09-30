@@ -87,7 +87,7 @@ public class FormatUtils {
 		
 		String current = null;
 		StringBuilder builder = new StringBuilder(input);
-		while ((current = builder.toString()).matches(".*?&#[a-f0-9]{6}.*?")) {
+		while ((current = builder.toString()).matches(".*?§|&#[a-fA-F0-9]{6}.*?")) {
 			int index = current.indexOf("&#");
 			String color = current.substring(index+2, index+8);
 			StringBuilder colorBuilder = new StringBuilder("§x");
